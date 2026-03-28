@@ -3,7 +3,6 @@ import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import api from "@/lib/api";
-import heic2any from "heic2any";
 
 // Lazy load emoji picker (heavy component)
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false, loading: () => <div className="p-4 text-center text-gray-400 text-sm">Carregando emojis...</div> });
@@ -37,12 +36,13 @@ const weekDays = [
 async function resizeImage(file: File): Promise<string> {
   const MAX = 200;
 
-  // Convert HEIC/HEIF to JPEG first
+  // Convert HEIC/HEIF to JPEG first (dynamic import avoids SSR issues)
   const isHeic = file.type === "image/heic" || file.type === "image/heif"
     || file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif");
 
   let sourceFile: File = file;
   if (isHeic) {
+    const heic2any = (await import("heic2any")).default;
     const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
     sourceFile = new File([converted as Blob], "photo.jpg", { type: "image/jpeg" });
   }
