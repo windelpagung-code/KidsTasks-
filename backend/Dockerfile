@@ -16,6 +16,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 COPY package*.json ./
+COPY prisma ./prisma
 RUN npm install --omit=dev
 
 COPY --from=builder /app/dist ./dist
