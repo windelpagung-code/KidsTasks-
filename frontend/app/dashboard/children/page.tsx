@@ -31,44 +31,63 @@ const weekDays = [
   { value: "0", label: "Domingo" },
 ];
 
-/** Resize an image File to max 200x200, return as base64 JPEG string */
+/** Resize an image File to max 200x200, return as base64 JPEG string.
+ *  Supports HEIC/HEIF (iPhone) via createImageBitmap, with fallbacks. */
 async function resizeImage(file: File): Promise<string> {
-  // Step 1: read file as data URL via FileReader (more compatible than createObjectURL on iOS)
+  const MAX = 200;
+
+  function drawBitmapSource(source: HTMLImageElement | ImageBitmap): string {
+    const sw = "width" in source ? source.width : (source as ImageBitmap).width;
+    const sh = "height" in source ? source.height : (source as ImageBitmap).height;
+    let w = sw, h = sh;
+    if (w > h) { h = Math.round((h / w) * MAX); w = MAX; }
+    else { w = Math.round((w / h) * MAX); h = MAX; }
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("no-ctx");
+    ctx.drawImage(source as CanvasImageSource, 0, 0, w, h);
+    return canvas.toDataURL("image/jpeg", 0.85);
+  }
+
+  // Strategy 1: createImageBitmap — handles HEIC natively on iOS 15+ and modern Chrome
+  if (typeof createImageBitmap !== "undefined") {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const result = drawBitmapSource(bitmap);
+      bitmap.close();
+      return result;
+    } catch { /* fall through */ }
+  }
+
+  // Strategy 2: object URL → <img> (works for JPEG/PNG/WEBP on all browsers)
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = objectUrl;
+    });
+    return drawBitmapSource(img);
+  } catch { /* fall through */ } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  // Strategy 3: FileReader data URL → <img> (last resort)
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => resolve(e.target?.result as string);
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
-
-  // Step 2: load into an Image element
-  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-    image.src = dataUrl;
+  const img2 = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = dataUrl;
   });
-
-  // Step 3: draw to canvas at max 200×200
-  const MAX = 200;
-  let { width, height } = img;
-  if (width > height) { height = Math.round((height / width) * MAX); width = MAX; }
-  else { width = Math.round((width / height) * MAX); height = MAX; }
-
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return dataUrl; // fallback: return original if canvas unavailable
-
-  ctx.drawImage(img, 0, 0, width, height);
-
-  // Try JPEG first; if toDataURL throws (rare), fall back to original
-  try {
-    return canvas.toDataURL("image/jpeg", 0.85);
-  } catch {
-    return dataUrl;
-  }
+  return drawBitmapSource(img2);
 }
 
 function isImageData(url?: string) {
