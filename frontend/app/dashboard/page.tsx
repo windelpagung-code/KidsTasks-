@@ -12,7 +12,7 @@ interface Child {
   pendingTasks: number;
 }
 
-function ChildAvatar({ child, colorClass, size = "lg" }: { child: Child; colorClass: string; size?: "sm" | "lg" }) {
+function ChildAvatar({ child, colorClass, size = "lg" }: { child: { name: string; avatarUrl?: string }; colorClass: string; size?: "sm" | "lg" }) {
   const isEmoji = child.avatarUrl && !child.avatarUrl.startsWith("data:") && !child.avatarUrl.startsWith("http");
   const isImage = child.avatarUrl && (child.avatarUrl.startsWith("data:") || child.avatarUrl.startsWith("http"));
   const sizeClass = size === "lg" ? "w-12 h-12 text-2xl text-lg font-extrabold" : "w-9 h-9 text-base text-sm font-extrabold";
