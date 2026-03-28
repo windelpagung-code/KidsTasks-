@@ -31,3 +31,4 @@ Thumbs.db
 # Prisma
 *.db
 *.db-journal
+.vercel
