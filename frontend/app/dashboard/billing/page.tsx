@@ -55,10 +55,10 @@ const plans = [
   {
     id: "annual",
     name: "Anual",
-    price: "R$ 159,90",
-    period: "/ano",
+    price: "R$ 118,80",
+    period: "/ano · R$ 9,90/mês",
     color: "border-violet-500 ring-2 ring-violet-500",
-    badge: "Mais popular · economize R$ 78,90",
+    badge: "Mais popular · 50% off",
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL,
     features: paidFeatures,
     cta: "Assinar anual",
