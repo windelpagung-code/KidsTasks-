@@ -236,21 +236,23 @@ export default function ChildrenPage() {
               {/* Photo tab */}
               {avatarTab === "photo" && (
                 <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  <button type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm text-gray-500 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50 transition disabled:opacity-50">
-                    {uploading ? "⏳ Processando foto..." : "📁 Selecionar foto do dispositivo"}
-                  </button>
+                  <label
+                    className={`w-full flex items-center justify-center px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition ${uploading ? "border-gray-200 bg-gray-50 opacity-50 pointer-events-none" : "border-gray-300 text-gray-500 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50"}`}
+                  >
+                    <span className="text-sm font-medium">
+                      {uploading ? "⏳ Processando foto..." : "📁 Selecionar foto do dispositivo"}
+                    </span>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      disabled={uploading}
+                      className="sr-only"
+                    />
+                  </label>
                   <p className="text-xs text-gray-400 mt-1.5 text-center">
-                    Formatos aceitos: JPG, PNG, WEBP • Redimensionado automaticamente para 200×200 px
+                    JPG, PNG, WEBP, HEIC • Redimensionado automaticamente
                   </p>
                 </div>
               )}

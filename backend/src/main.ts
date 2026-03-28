@@ -5,7 +5,9 @@ import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create(AppModule, { rawBody: true, bodyParser: true });
+  app.use(require('express').json({ limit: '5mb' }));
+  app.use(require('express').urlencoded({ limit: '5mb', extended: true }));
 
   app.use(cookieParser());
   app.setGlobalPrefix('api/v1');

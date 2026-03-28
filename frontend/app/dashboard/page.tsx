@@ -6,9 +6,24 @@ import api from "@/lib/api";
 interface Child {
   id: string;
   name: string;
+  avatarUrl?: string;
   level: number;
   totalPoints: number;
   pendingTasks: number;
+}
+
+function ChildAvatar({ child, colorClass, size = "lg" }: { child: Child; colorClass: string; size?: "sm" | "lg" }) {
+  const isEmoji = child.avatarUrl && !child.avatarUrl.startsWith("data:") && !child.avatarUrl.startsWith("http");
+  const isImage = child.avatarUrl && (child.avatarUrl.startsWith("data:") || child.avatarUrl.startsWith("http"));
+  const sizeClass = size === "lg" ? "w-12 h-12 text-2xl text-lg font-extrabold" : "w-9 h-9 text-base text-sm font-extrabold";
+  if (isImage) {
+    return <img src={child.avatarUrl} alt={child.name} className={`${sizeClass.split(" ").slice(0,2).join(" ")} rounded-2xl object-cover flex-shrink-0 shadow-sm`} />;
+  }
+  return (
+    <div className={`${sizeClass.split(" ").slice(0,2).join(" ")} rounded-2xl bg-gradient-to-br ${colorClass} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+      {isEmoji ? <span className={size === "lg" ? "text-2xl" : "text-base"}>{child.avatarUrl}</span> : <span className={`text-white ${size === "lg" ? "text-lg font-extrabold" : "text-sm font-extrabold"}`}>{child.name[0].toUpperCase()}</span>}
+    </div>
+  );
 }
 
 interface DashboardData {
@@ -200,11 +215,7 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-start gap-4">
                     {/* Avatar */}
-                    <div
-                      className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center text-white text-lg font-extrabold flex-shrink-0 shadow-sm`}
-                    >
-                      {child.name[0].toUpperCase()}
-                    </div>
+                    <ChildAvatar child={child} colorClass={color} size="lg" />
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
@@ -293,9 +304,7 @@ export default function DashboardPage() {
                 return (
                   <div key={child.id} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? "bg-amber-50 border border-amber-100" : "bg-gray-50"}`}>
                     <span className="text-xl w-7 text-center flex-shrink-0">{medals[idx] || `${idx + 1}º`}</span>
-                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white text-sm font-extrabold flex-shrink-0`}>
-                      {child.name[0].toUpperCase()}
-                    </div>
+                    <ChildAvatar child={child} colorClass={color} size="sm" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-1">
                         <span className="font-semibold text-gray-900 text-sm truncate">{child.name}</span>

@@ -130,22 +130,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       {/* ── Mobile bottom nav ───────────────────────────────── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg flex justify-around py-2 px-1 z-40">
-        {nav.slice(0, 5).map((item) => {
-          const active = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all text-center ${
-                active ? "text-violet-600" : "text-gray-400"
-              }`}
-            >
-              <span className={`text-xl transition-transform ${active ? "scale-110" : ""}`}>{item.icon}</span>
-              <span className="text-[9px] font-semibold">{item.label}</span>
-            </Link>
-          );
-        })}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg z-40">
+        <div className="flex overflow-x-auto no-scrollbar py-1 px-1">
+          {nav.map((item) => {
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center gap-0.5 flex-shrink-0 px-3 py-1.5 rounded-xl transition-all text-center min-w-[60px] ${
+                  active ? "text-violet-600" : "text-gray-400"
+                }`}
+              >
+                <span className={`text-xl transition-transform ${active ? "scale-110" : ""}`}>{item.icon}</span>
+                <span className="text-[9px] font-semibold leading-tight">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
       </nav>
     </div>
   );
