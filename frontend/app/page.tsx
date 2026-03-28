@@ -502,7 +502,7 @@ export default function Home() {
               <span style={{ color: "#7c3aed" }}>Resultado que dura anos.</span>
             </h2>
             <p className="text-gray-500 text-lg max-w-xl mx-auto">
-              Por menos de R$0,65 por dia, você transforma a rotina de toda a sua família.
+              Por menos de R$0,33 por dia, você transforma a rotina de toda a sua família.
             </p>
           </div>
 
@@ -546,7 +546,7 @@ export default function Home() {
                 <span className="text-4xl font-extrabold text-white">R$19,90</span>
                 <span className="text-white/50 text-sm">/mês</span>
               </div>
-              <p className="text-white/40 text-sm mb-6">Equivale a R$0,65 por dia</p>
+              <p className="text-white/40 text-sm mb-6">Equivale a R$0,66 por dia</p>
               <ul className="space-y-3 mb-8">
                 {[
                   "Até 5 filhos",
@@ -575,19 +575,19 @@ export default function Home() {
             {/* Annual — Economia */}
             <div className="bg-white rounded-2xl border-2 border-emerald-200 p-7 relative">
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md">
-                💰 ECONOMIZE 33%
+                💰 ECONOMIZE 50%
               </div>
               <div className="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-4">Anual</div>
               <div className="mb-1">
-                <span className="text-4xl font-extrabold text-gray-900">R$159,90</span>
+                <span className="text-4xl font-extrabold text-gray-900">R$118,80</span>
                 <span className="text-gray-400 text-sm">/ano</span>
               </div>
               <p className="text-gray-400 text-sm mb-1">
                 <span className="line-through">R$238,80</span>
                 {" "}→{" "}
-                <span className="text-emerald-600 font-bold">2 meses grátis</span>
+                <span className="text-emerald-600 font-bold">6 meses grátis</span>
               </p>
-              <p className="text-gray-300 text-xs mb-6">R$13,33/mês efetivo</p>
+              <p className="text-gray-300 text-xs mb-6">R$9,90/mês efetivo</p>
               <ul className="space-y-3 mb-8">
                 {[
                   "Tudo do plano Mensal",
