@@ -10,8 +10,8 @@ RUN npm install --include=dev
 
 COPY . .
 RUN npx prisma generate
-RUN npm run build
+RUN npm run build && echo "Build complete" && ls dist/ && ls dist/src/ | head -5
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/main"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/src/main"]
