@@ -33,25 +33,42 @@ const weekDays = [
 
 /** Resize an image File to max 200x200, return as base64 JPEG string */
 async function resizeImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const MAX = 200;
-      let { width, height } = img;
-      if (width > height) { height = (height / width) * MAX; width = MAX; }
-      else { width = (width / height) * MAX; height = MAX; }
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(width);
-      canvas.height = Math.round(height);
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", 0.8));
-    };
-    img.onerror = reject;
-    img.src = url;
+  // Step 1: read file as data URL via FileReader (more compatible than createObjectURL on iOS)
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target?.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
+
+  // Step 2: load into an Image element
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = dataUrl;
+  });
+
+  // Step 3: draw to canvas at max 200×200
+  const MAX = 200;
+  let { width, height } = img;
+  if (width > height) { height = Math.round((height / width) * MAX); width = MAX; }
+  else { width = Math.round((width / height) * MAX); height = MAX; }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return dataUrl; // fallback: return original if canvas unavailable
+
+  ctx.drawImage(img, 0, 0, width, height);
+
+  // Try JPEG first; if toDataURL throws (rare), fall back to original
+  try {
+    return canvas.toDataURL("image/jpeg", 0.85);
+  } catch {
+    return dataUrl;
+  }
 }
 
 function isImageData(url?: string) {
@@ -111,7 +128,7 @@ export default function ChildrenPage() {
       const base64 = await resizeImage(file);
       setForm((f) => ({ ...f, avatarUrl: base64 }));
     } catch {
-      setError("Erro ao processar imagem. Tente outra foto.");
+      setError("Não foi possível carregar a imagem. Tente salvar como JPG/PNG antes de enviar.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
