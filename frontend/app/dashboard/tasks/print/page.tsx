@@ -10,6 +10,7 @@ interface Task {
   difficulty: string;
   basePoints: number;
   recurrenceType: string;
+  recurrenceDays?: string;
   isActive: boolean;
   assignments?: { id: string; childId: string; child: { name: string } }[];
 }
@@ -232,15 +233,35 @@ export default function TasksPrintPage() {
   );
 }
 
+const WEEK_DAYS_PRINT = [{ v: 1, l: "Seg" },{ v: 2, l: "Ter" },{ v: 3, l: "Qua" },{ v: 4, l: "Qui" },{ v: 5, l: "Sex" },{ v: 6, l: "Sáb" },{ v: 0, l: "Dom" }];
+
 function TaskList({ tasks, showPoints, showDifficulty }: { tasks: Task[]; showPoints: boolean; showDifficulty: boolean }) {
   return (
     <div className="space-y-2">
-      {tasks.map((task) => (
+      {tasks.map((task) => {
+        const showDays = task.recurrenceType === "daily" || task.recurrenceType === "weekly";
+        let selectedDays: number[] = [];
+        try { selectedDays = task.recurrenceDays ? JSON.parse(task.recurrenceDays) : []; } catch { selectedDays = []; }
+        return (
         <div key={task.id} className="task-card flex items-start gap-3 p-3 border border-gray-200 rounded-xl">
-          {/* Checkbox */}
+          {/* Checkbox or weekdays */}
+          {showDays ? (
+            <div className="flex gap-1 shrink-0 mt-0.5">
+              {WEEK_DAYS_PRINT.map((d) => {
+                const active = selectedDays.length === 0 || selectedDays.includes(d.v);
+                return (
+                  <div key={d.v} className="flex flex-col items-center gap-0.5">
+                    <span style={{ fontSize: 8, fontWeight: 700, color: active ? "#7c3aed" : "#d1d5db", textTransform: "uppercase" }}>{d.l}</span>
+                    <div style={{ width: 16, height: 16, border: `2px solid ${active ? "#7c3aed" : "#d1d5db"}`, borderRadius: 3, background: active && selectedDays.length > 0 ? "#ede9fe" : "white" }} />
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
           <div className="w-6 h-6 border-2 border-gray-400 rounded mt-0.5 shrink-0 flex items-center justify-center print:border-gray-600">
             <span className="no-print text-gray-300 text-xs">✓</span>
           </div>
+          )}
           {/* Icon */}
           <div className="text-2xl shrink-0 leading-none mt-0.5">{task.icon || "📋"}</div>
           {/* Content */}
@@ -269,7 +290,8 @@ function TaskList({ tasks, showPoints, showDifficulty }: { tasks: Task[]; showPo
             </div>
           )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

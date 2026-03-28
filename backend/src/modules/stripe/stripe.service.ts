@@ -15,6 +15,25 @@ export class StripeService {
   async createCheckoutSession(tenantId: string, userId: string, priceId: string, successUrl: string, cancelUrl: string) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
 
+    // If tenant already has an active subscription, do an upgrade/downgrade instead
+    if (tenant.stripeSubscriptionId) {
+      const sub = await this.stripe.subscriptions.retrieve(tenant.stripeSubscriptionId) as any;
+      if (['active', 'trialing'].includes(sub.status)) {
+        const itemId = sub.items.data[0].id;
+        const updatedSub = await this.stripe.subscriptions.update(tenant.stripeSubscriptionId, {
+          items: [{ id: itemId, price: priceId }],
+          proration_behavior: 'create_prorations',
+        }) as any;
+        const plan = this.getPlanFromPriceId(priceId);
+        const periodEnd = this.getPeriodEnd(updatedSub);
+        await this.prisma.tenant.update({
+          where: { id: tenantId },
+          data: { plan, subscriptionStatus: updatedSub.status, currentPeriodEnd: periodEnd },
+        });
+        return { url: successUrl };
+      }
+    }
+
     let customerId = tenant.stripeCustomerId;
     if (!customerId) {
       const user = await this.prisma.user.findUnique({ where: { id: userId } });

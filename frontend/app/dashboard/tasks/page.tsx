@@ -70,7 +70,8 @@ export default function TasksPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setSaving(true); setError("");
     try {
-      const payload = { ...form, basePoints: parseInt(form.basePoints), description: form.description || undefined, category: form.category || undefined, childIds: form.childIds.length > 0 ? form.childIds : undefined, recurrenceDays: (form.recurrenceType === "weekly" && form.recurrenceDays.length > 0) ? form.recurrenceDays : undefined };
+      const sendDays = (form.recurrenceType === "weekly" || form.recurrenceType === "daily") && form.recurrenceDays.length > 0;
+      const payload = { ...form, basePoints: parseInt(form.basePoints), description: form.description || undefined, category: form.category || undefined, childIds: form.childIds.length > 0 ? form.childIds : undefined, recurrenceDays: sendDays ? form.recurrenceDays : undefined };
       if (editing) await api.put(`/tasks/${editing.id}`, payload);
       else await api.post("/tasks", payload);
       setShowForm(false); setEditing(null); loadTasks();
@@ -202,7 +203,7 @@ export default function TasksPage() {
                 <option value="one_time">Única vez</option>
               </select>
             </div>
-            {form.recurrenceType === "weekly" && (
+            {(form.recurrenceType === "weekly" || form.recurrenceType === "daily") && (
               <div className="sm:col-span-2">
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-xs font-semibold text-gray-600">Dias da semana</label>
@@ -232,7 +233,9 @@ export default function TasksPage() {
                   })}
                 </div>
                 {form.recurrenceDays.length === 0 && (
-                  <p className="text-xs text-gray-400 mt-1.5">Nenhum dia selecionado — vale todos os dias da semana</p>
+                  <p className="text-xs text-gray-400 mt-1.5">
+                    {form.recurrenceType === "daily" ? "Nenhum dia selecionado — aparece todos os dias" : "Nenhum dia selecionado — vale todos os dias da semana"}
+                  </p>
                 )}
               </div>
             )}

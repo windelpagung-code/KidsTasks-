@@ -277,6 +277,45 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* ── Ranking ─────────────────────────────────────────── */}
+      {data?.children && data.children.length > 1 && (() => {
+        const ranked = [...data.children].sort((a, b) => b.totalPoints - a.totalPoints);
+        const medals = ["🥇", "🥈", "🥉"];
+        return (
+          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <h2 className="text-base font-bold text-gray-900 mb-4" style={{ fontFamily: "var(--font-jakarta)" }}>
+              🏆 Ranking da família
+            </h2>
+            <div className="space-y-2">
+              {ranked.map((child, idx) => {
+                const color = AVATAR_COLORS[data.children.findIndex((c) => c.id === child.id) % AVATAR_COLORS.length];
+                const pct = xpPercent(child.totalPoints, child.level);
+                return (
+                  <div key={child.id} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? "bg-amber-50 border border-amber-100" : "bg-gray-50"}`}>
+                    <span className="text-xl w-7 text-center flex-shrink-0">{medals[idx] || `${idx + 1}º`}</span>
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white text-sm font-extrabold flex-shrink-0`}>
+                      {child.name[0].toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="font-semibold text-gray-900 text-sm truncate">{child.name}</span>
+                        <span className="text-xs text-violet-600 font-bold whitespace-nowrap">⭐ {child.totalPoints} pts</span>
+                      </div>
+                      <div className="xp-bar">
+                        <div className="xp-bar-fill" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                    <span className="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                      Nv {child.level}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── Quick actions ───────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
         <h2

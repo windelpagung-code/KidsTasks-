@@ -10,6 +10,7 @@ interface Task {
   difficulty: string;
   basePoints: number;
   recurrenceType: string;
+  recurrenceDays?: string;
   isActive: boolean;
   assignments?: { id: string; childId: string; child: { name: string } }[];
 }
@@ -271,17 +272,23 @@ function TaskList({ tasks, showPoints, showDifficulty, childrenMap }: {
         const assignedChildren = childrenMap && task.assignments
           ? task.assignments.map((a) => childrenMap[a.childId]).filter(Boolean)
           : [];
-        const isDaily = task.recurrenceType === "daily";
+        const showDays = task.recurrenceType === "daily" || task.recurrenceType === "weekly";
+        let selectedDays: number[] = [];
+        try { selectedDays = task.recurrenceDays ? JSON.parse(task.recurrenceDays) : []; } catch { selectedDays = []; }
+        const DAYS = [{ v: 1, l: "Seg" },{ v: 2, l: "Ter" },{ v: 3, l: "Qua" },{ v: 4, l: "Qui" },{ v: 5, l: "Sex" },{ v: 6, l: "Sáb" },{ v: 0, l: "Dom" }];
         return (
           <div key={task.id} className="task-row">
-            {isDaily ? (
+            {showDays ? (
               <div className="weekdays">
-                {["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map((d) => (
-                  <div key={d} className="weekday-item">
-                    <span className="weekday-label">{d}</span>
-                    <div className="weekday-cb" />
-                  </div>
-                ))}
+                {DAYS.map((d) => {
+                  const active = selectedDays.length === 0 || selectedDays.includes(d.v);
+                  return (
+                    <div key={d.v} className="weekday-item">
+                      <span className="weekday-label" style={{ color: active ? "#7c3aed" : "#d1d5db" }}>{d.l}</span>
+                      <div className="weekday-cb" style={{ borderColor: active ? "#7c3aed" : "#d1d5db", background: active && selectedDays.length > 0 ? "#ede9fe" : "white" }} />
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="task-cb" />

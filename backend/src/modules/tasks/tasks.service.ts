@@ -163,7 +163,7 @@ export class TasksService {
       where: { id: dto.assignmentId },
       data: {
         status: 'done',
-        completedAt: new Date(),
+        completedAt: dto.completedAt ? new Date(dto.completedAt) : new Date(),
         pointsEarned,
       },
     });

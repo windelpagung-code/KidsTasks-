@@ -17,12 +17,18 @@ const difficultyLabels: Record<string, string> = { easy: "Fácil", medium: "Méd
 
 const AVATAR_COLORS = ["from-violet-500 to-purple-600","from-blue-500 to-cyan-500","from-emerald-500 to-teal-500","from-orange-500 to-amber-500","from-pink-500 to-rose-500"];
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function ApprovalsPage() {
   const [children, setChildren] = useState<Child[]>([]);
   const [selected, setSelected] = useState<string>("all");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState<string | null>(null);
+  const [datePickerId, setDatePickerId] = useState<string | null>(null);
+  const [pickedDate, setPickedDate] = useState<string>(todayISO());
 
   useEffect(() => { api.get("/children").then((r) => setChildren(r.data)).catch(() => {}); }, []);
 
@@ -42,11 +48,20 @@ export default function ApprovalsPage() {
 
   useEffect(() => { loadAllAssignments(); }, [loadAllAssignments]);
 
-  async function markDone(assignmentId: string) {
+  async function markDone(assignmentId: string, completedAt: string) {
+    setDatePickerId(null);
     setMarking(assignmentId);
-    try { await api.post("/tasks/complete", { assignmentId }); loadAllAssignments(); }
+    try {
+      await api.post("/tasks/complete", { assignmentId, completedAt: new Date(completedAt).toISOString() });
+      loadAllAssignments();
+    }
     catch (err: unknown) { const e = err as { response?: { data?: { message?: string } } }; alert(e.response?.data?.message || "Erro ao marcar tarefa"); }
     finally { setMarking(null); }
+  }
+
+  function openDatePicker(assignmentId: string) {
+    setPickedDate(todayISO());
+    setDatePickerId(assignmentId);
   }
   async function markNotDone(assignmentId: string) {
     setMarking(assignmentId);
@@ -149,10 +164,30 @@ export default function ApprovalsPage() {
                           )}
                         </div>
                       </div>
-                      <button onClick={() => markDone(a.id)} disabled={marking === a.id}
-                        className="flex-shrink-0 flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition disabled:opacity-50">
-                        {marking === a.id ? "..." : "✓ Aprovar"}
-                      </button>
+                        {datePickerId === a.id ? (
+                        <div className="flex-shrink-0 flex items-center gap-2">
+                          <input
+                            type="date"
+                            value={pickedDate}
+                            max={todayISO()}
+                            onChange={(e) => setPickedDate(e.target.value)}
+                            className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                          />
+                          <button onClick={() => markDone(a.id, pickedDate)} disabled={marking === a.id}
+                            className="flex items-center gap-1 bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 transition disabled:opacity-50">
+                            {marking === a.id ? "..." : "✓"}
+                          </button>
+                          <button onClick={() => setDatePickerId(null)}
+                            className="text-gray-400 hover:text-gray-600 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition text-xs">
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={() => openDatePicker(a.id)} disabled={marking === a.id}
+                          className="flex-shrink-0 flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition disabled:opacity-50">
+                          {marking === a.id ? "..." : "✓ Aprovar"}
+                        </button>
+                      )}
                     </div>
                   );
                 })}

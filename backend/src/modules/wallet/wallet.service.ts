@@ -80,6 +80,31 @@ export class WalletService {
     return this.prisma.walletTransaction.delete({ where: { id: txId } });
   }
 
+  async convertPoints(tenantId: string, childId: string, userId: string, dto: { points: number; rate: number }) {
+    const child = await this.prisma.child.findFirst({ where: { id: childId, tenantId } });
+    if (!child) throw new NotFoundException('Filho não encontrado');
+    if (!dto.points || dto.points <= 0) throw new BadRequestException('Quantidade de pontos deve ser maior que zero');
+    if (!dto.rate || dto.rate <= 0) throw new BadRequestException('Taxa de conversão deve ser maior que zero');
+    if (child.totalPoints < dto.points) throw new BadRequestException('Pontos insuficientes');
+
+    const amount = Math.round(dto.points * dto.rate * 100) / 100;
+
+    await this.prisma.child.update({
+      where: { id: childId },
+      data: { totalPoints: { decrement: dto.points } },
+    });
+
+    return this.prisma.walletTransaction.create({
+      data: {
+        childId,
+        type: 'credit',
+        amount,
+        description: `Conversão de ${dto.points} ponto${dto.points !== 1 ? 's' : ''} (R$${dto.rate.toFixed(2)}/ponto)`,
+        createdBy: userId,
+      },
+    });
+  }
+
   async markAllowancePaid(tenantId: string, childId: string, userId: string) {
     const child = await this.prisma.child.findFirst({ where: { id: childId, tenantId } });
     if (!child) throw new NotFoundException('Filho não encontrado');

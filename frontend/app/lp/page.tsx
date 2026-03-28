@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 /* ─────────────────────────────────────────────────────────────
-   KidsTasks — Landing Page
-   Copy structure: RMBC (Relevância → Mecanismo → Benefício → CTA)
-   Gatilhos: Prova social, escassez, autoridade, reciprocidade,
-             dor/medo, transformação, garantia
+   KidsTasks — Landing Page — Variação B
+   Copy: Gatilhos emocionais dos pais
+   Ângulo: Reduzir conflitos, criar filhos responsáveis, transformar tarefas em diversão
+   Tom: Caloroso, confiante, próximo de pai/mãe brasileiro
 ───────────────────────────────────────────────────────────── */
 
 export default function Home() {
@@ -49,8 +49,8 @@ export default function Home() {
       </header>
 
       {/* ══════════════════════════════════════════════════════
-          HERO — R: Relevância / Resultado desejado
-          Gatilhos: Dor + Transformação + Urgência suave
+          HERO — Transformação emocional do pai/mãe
+          Gatilhos: Dor profunda + Esperança + Identidade parental
       ══════════════════════════════════════════════════════ */}
       <section
         className="relative overflow-hidden"
@@ -82,12 +82,12 @@ export default function Home() {
                 </svg>
               ))}
             </span>
-            +12.847 famílias transformadas · Nota 4.9/5
+            +12.847 famílias vivendo em mais harmonia · Nota 4.9/5
           </div>
 
-          {/* Main headline — Dor + Transformação */}
+          {/* Main headline — Identidade parental + Transformação */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.05] mb-6 tracking-tight">
-            Chega de brigar com
+            Seus filhos, mais responsáveis.
             <br />
             <span style={{
               background: "linear-gradient(90deg, #fbbf24 0%, #f472b6 50%, #a78bfa 100%)",
@@ -95,12 +95,12 @@ export default function Home() {
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
             }}>
-              seu filho por tarefas.
+              Sua casa, mais em paz.
             </span>
           </h1>
 
           <p className="text-white/65 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-            O KidsTasks transforma tarefas chatas em missões gamificadas. Seu filho ganha pontos, sobe de nível e troca por recompensas reais — e você finalmente tem paz em casa.
+            O KidsTasks usa a mesma lógica dos jogos que seu filho ama para transformar tarefas em missões. Ele se engaja, você respira. E no caminho, você está criando um adulto mais organizado e responsável.
           </p>
 
           {/* CTA Group */}
@@ -110,7 +110,7 @@ export default function Home() {
               className="inline-flex items-center justify-center gap-2 text-gray-900 font-extrabold px-8 py-4 rounded-2xl text-lg shadow-xl hover:shadow-2xl transition-all active:scale-95"
               style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
             >
-              🚀 Criar conta grátis agora
+              🚀 Quero harmonia em casa — grátis
             </Link>
             <a
               href="#como-funciona"
@@ -163,10 +163,10 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { value: "12.847", label: "Famílias ativas" },
-              { value: "98.4%", label: "Taxa de renovação" },
-              { value: "4.9★", label: "Nota média" },
-              { value: "30 dias", label: "Para ver resultado" },
+              { value: "12.847", label: "Famílias mais felizes" },
+              { value: "98.4%", label: "Renovam todo mês" },
+              { value: "4.9★", label: "Nota dos pais" },
+              { value: "30 dias", label: "Para sentir a diferença" },
             ].map((s) => (
               <div key={s.label}>
                 <div className="text-3xl md:text-4xl font-extrabold text-white mb-1">{s.value}</div>
@@ -178,18 +178,18 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          DOR — "Você reconhece essa situação?"
-          Gatilho: Identificação + Agitação da dor
+          DOR — Agitação emocional dos pais
+          Gatilho: Identificação profunda + Medo + Culpa
       ══════════════════════════════════════════════════════ */}
       <section className="bg-white py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-14">
             <span className="text-sm font-semibold text-violet-600 bg-violet-50 px-3 py-1 rounded-full">
-              Você se identifica?
+              Isso já aconteceu na sua casa?
             </span>
             <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mt-4 leading-tight">
-              A rotina que toda família<br />
-              <span style={{ color: "#7c3aed" }}>conhece de cor.</span>
+              Toda família passa por isso.<br />
+              <span style={{ color: "#7c3aed" }}>Mas não precisa continuar assim.</span>
             </h2>
           </div>
 
@@ -197,23 +197,23 @@ export default function Home() {
             {[
               {
                 icon: "😤",
-                title: "\"Você disse que ia fazer!\"",
-                desc: "Você pede. Ele promete. Não faz. Você cobra de novo. Ele reclama. Você cede. Todo dia.",
+                title: "A batalha das tarefas todo dia",
+                desc: "Você pede com jeito. Pede com firmeza. Ameaça. Cede. No fim, faz você mesmo. E sente que está falhando como pai ou mãe.",
               },
               {
                 icon: "📱",
-                title: "Celular 4h, tarefas 0h",
-                desc: "Seu filho passa horas em jogos e redes sociais — mas 15 minutos de tarefa parece impossível.",
+                title: "2 horas de jogo, 5 minutos de tarefa",
+                desc: "Seu filho tem energia e foco infinitos para o que ele ama — mas qualquer tarefa parece um castigo insuportável.",
               },
               {
                 icon: "💸",
-                title: "Mesada sem accountability",
-                desc: "Dá a mesada na esperança de motivar. Ele pega o dinheiro e as tarefas continuam sem fazer.",
+                title: "Mesada que não educa",
+                desc: "Você dá dinheiro com a esperança de ensinar responsabilidade. Mas sem um sistema claro, a mesada não muda nada.",
               },
               {
                 icon: "😰",
-                title: "Sentimento de falha",
-                desc: "Você fica se perguntando se está educando seu filho para ser irresponsável como adulto.",
+                title: "O medo de estar criando mal",
+                desc: "Lá no fundo você se pergunta: será que meu filho vai ser aquele adulto que não sabe cuidar de si mesmo?",
               },
             ].map((p) => (
               <div key={p.title} className="flex gap-4 p-5 rounded-2xl bg-red-50 border border-red-100">
@@ -229,10 +229,10 @@ export default function Home() {
           <div className="mt-10 p-6 rounded-2xl text-center"
             style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)" }}>
             <p className="text-amber-900 font-semibold text-lg">
-              O problema não é seu filho — é a falta de um sistema que fale a língua dele.
+              A verdade: seu filho não é preguiçoso. Ele só precisa de motivação que faça sentido pra ele.
             </p>
             <p className="text-amber-700 text-sm mt-2">
-              Crianças são naturalmente motivadas por jogos. O KidsTasks traz essa lógica para a vida real.
+              Crianças aprendem brincando. O KidsTasks traz a lógica dos jogos para dentro da sua rotina familiar.
             </p>
           </div>
         </div>
@@ -240,20 +240,20 @@ export default function Home() {
 
       {/* ══════════════════════════════════════════════════════
           MECANISMO — Como o KidsTasks funciona
-          Gatilho: Novidade + Mecanismo único
+          Gatilho: Novidade + Desenvolvimento infantil
       ══════════════════════════════════════════════════════ */}
       <section id="como-funciona" className="py-20 px-6 bg-gray-50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
             <span className="text-sm font-semibold text-violet-600 bg-violet-50 px-3 py-1 rounded-full border border-violet-100">
-              O mecanismo
+              Como funciona
             </span>
             <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mt-4 mb-4 leading-tight">
-              Por que funciona quando<br />
-              <span style={{ color: "#7c3aed" }}>tudo mais falhou?</span>
+              Simples para os pais.<br />
+              <span style={{ color: "#7c3aed" }}>Irresistível para os filhos.</span>
             </h2>
             <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-              Porque usamos a mesma psicologia dos jogos que mantêm seu filho grudado no celular — só que para tarefas de verdade.
+              Em 3 passos, você transforma a relação da sua família com responsabilidades — sem gritar, sem suplicar.
             </p>
           </div>
 
@@ -262,22 +262,22 @@ export default function Home() {
               {
                 step: "01",
                 icon: "📋",
-                title: "Pai cria as missões",
-                desc: "Configure tarefas com nome, ícone, dificuldade e quantos pontos cada uma vale. Funciona com qualquer rotina.",
+                title: "Você cria as missões",
+                desc: "Configure as tarefas da rotina com nome, dificuldade e quantos pontos valem. Leva menos de 5 minutos para montar a semana inteira.",
                 color: "from-violet-500 to-purple-600",
               },
               {
                 step: "02",
                 icon: "🎮",
-                title: "Filho completa e ganha XP",
-                desc: "A criança marca como concluída, você aprova. Pontos, nível, badges — exatamente como um jogo.",
+                title: "Seu filho entra no jogo",
+                desc: "A criança vê as missões, conclui e você aprova. Ela ganha pontos, sobe de nível, coleciona badges — exatamente como no game favorito dela.",
                 color: "from-blue-500 to-cyan-500",
               },
               {
                 step: "03",
                 icon: "🏆",
-                title: "Troca por recompensas reais",
-                desc: "Com os pontos acumulados, seu filho escolhe recompensas na loja da família. Você define. Ele se motiva.",
+                title: "Recompensas que motivam de verdade",
+                desc: "Com os pontos, seu filho escolhe recompensas da loja da família — que você mesmo define. Tempo de tela, um passeio, um brinquedo. A motivação não acaba.",
                 color: "from-amber-500 to-orange-500",
               },
             ].map((s) => (
@@ -306,15 +306,15 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          BENEFÍCIOS — Feature stack
-          Gatilho: Benefício > Característica
+          BENEFÍCIOS — Foco no pai, não na feature
+          Gatilho: Benefício emocional > Característica técnica
       ══════════════════════════════════════════════════════ */}
       <section className="py-20 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 leading-tight">
-              Tudo que sua família precisa<br />
-              <span style={{ color: "#7c3aed" }}>em um só lugar.</span>
+              Não é só sobre tarefas.<br />
+              <span style={{ color: "#7c3aed" }}>É sobre quem seus filhos vão se tornar.</span>
             </h2>
           </div>
 
@@ -322,33 +322,33 @@ export default function Home() {
             {[
               {
                 icon: "🎯",
-                title: "Tarefas como missões gamificadas",
-                desc: "Cada tarefa tem ícone, dificuldade (fácil, médio, difícil) e recompensa em pontos. Seu filho sabe exatamente o que ganhar.",
+                title: "Seu filho aprende que esforço tem valor",
+                desc: "Quando a recompensa vem do trabalho — não do choro ou da insistência — você está ensinando uma lição que dura a vida toda.",
               },
               {
                 icon: "💰",
-                title: "Mesada automática vinculada ao esforço",
-                desc: "Defina quanto cada ponto vale em reais. A mesada é calculada automaticamente com base nas tarefas concluídas. Zero discussão.",
+                title: "Educação financeira que começa em casa",
+                desc: "A mesada calculada com base nas tarefas concluídas ensina que dinheiro se ganha, não se pede. Sem discussão, sem subjetividade.",
               },
               {
                 icon: "🏅",
-                title: "Badges, níveis e ranking familiar",
-                desc: "Conquistas especiais por sequências de tarefas, recordes e primeiros lugares. Motivação que não cansa.",
+                title: "Autoestima que cresce a cada conquista",
+                desc: "Badges, níveis e recordes mostram para seu filho que ele é capaz. Essa confiança vai além das tarefas domésticas.",
               },
               {
                 icon: "🛍️",
-                title: "Loja de recompensas personalizada",
-                desc: "Crie recompensas que funcionam para sua família: tempo de tela extra, um passeio, um brinquedo. Você decide o preço em pontos.",
+                title: "Você no controle, seu filho motivado",
+                desc: "Você define quais recompensas existem e qual o preço em pontos. Nada de negociação interminável — as regras são claras para todo mundo.",
               },
               {
                 icon: "📊",
-                title: "Relatórios para pais",
-                desc: "Veja o histórico completo de cada filho: tarefas feitas, pontos ganhos, evolução por semana. Dados que te mostram quem está crescendo.",
+                title: "Você vê a evolução acontecendo",
+                desc: "Acompanhe semana a semana: tarefas feitas, pontos acumulados, sequências. Dados que mostram seu filho crescendo em responsabilidade.",
               },
               {
                 icon: "👨‍👩‍👧‍👦",
-                title: "Múltiplos filhos e cuidadores",
-                desc: "Adicione avós, babás e parceiros como editores ou visualizadores. A família toda conectada.",
+                title: "A família toda na mesma página",
+                desc: "Adicione avós, babás ou parceiros. Todo mundo sabe o que precisa ser feito — e ninguém fica de fora da educação dos filhos.",
               },
             ].map((f) => (
               <div key={f.title} className="flex gap-4 p-6 rounded-2xl border border-gray-100 hover:border-violet-200 hover:shadow-sm transition-all group">
@@ -372,10 +372,10 @@ export default function Home() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-extrabold text-white leading-tight mb-4">
-              Veja o sistema em ação
+              Bonito para os pais. Divertido para os filhos.
             </h2>
             <p className="text-gray-400 text-lg max-w-xl mx-auto">
-              Uma plataforma pensada para ser bonita e intuitiva tanto para os pais quanto para os filhos.
+              Uma plataforma pensada para que toda a família use com prazer — do pai ao filho de 6 anos.
             </p>
           </div>
 
@@ -404,76 +404,17 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          CONTROLE FINANCEIRO — Poupança dos filhos
-      ══════════════════════════════════════════════════════ */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Text side */}
-            <div>
-              <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                💰 Educação financeira desde cedo
-              </span>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mt-4 leading-tight">
-                Seu filho aprende o valor do dinheiro — de verdade.
-              </h2>
-              <p className="text-gray-500 text-lg mt-4 leading-relaxed">
-                Cada tarefa concluída gera pontos que viram saldo na <strong className="text-gray-800">poupança virtual</strong> do seu filho. Ele vê em tempo real o quanto ganhou, gastou e guardou.
-              </p>
-              <ul className="mt-6 space-y-3">
-                {[
-                  { icon: "📈", text: "Gráfico de créditos, débitos e saldo — visual e fácil de entender" },
-                  { icon: "🎯", text: "Filho define metas de economia para conquistar recompensas maiores" },
-                  { icon: "🛍️", text: "Loja de recompensas integrada: troca pontos por prêmios reais" },
-                  { icon: "👀", text: "Pais acompanham todo o histórico financeiro com transparência" },
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <span className="text-xl leading-none mt-0.5 flex-shrink-0">{item.icon}</span>
-                    <span className="text-gray-600 text-sm leading-relaxed">{item.text}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-6 text-sm text-gray-400 italic">
-                "Minha filha de 9 anos agora pergunta quanto custa antes de pedir qualquer coisa." — Mãe usuária do KidsTasks
-              </p>
-            </div>
-
-            {/* Screenshot placeholder */}
-            <div className="relative">
-              <div
-                className="rounded-2xl overflow-hidden border border-gray-200 shadow-xl"
-                style={{ background: "linear-gradient(135deg, #f0fdf4, #ecfdf5)" }}
-              >
-                <div className="flex items-center justify-center py-16 px-6 text-center" style={{ minHeight: 340 }}>
-                  <div>
-                    <div className="text-5xl mb-4">📊</div>
-                    <p className="text-emerald-700 text-sm font-semibold">[ Gráfico de poupança ]</p>
-                    <p className="text-emerald-500/60 text-xs mt-1">Créditos · Débitos · Saldo acumulado</p>
-                    <p className="text-gray-400 text-xs mt-3">1200 × 800px</p>
-                  </div>
-                </div>
-              </div>
-              {/* Decorative badge */}
-              <div className="absolute -top-3 -right-3 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-                Exclusivo KidsTasks
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════
-          DEPOIMENTOS — Prova social
-          Gatilho: Prova social + Identificação + Especificidade
+          DEPOIMENTOS — Histórias reais de pais brasileiros
+          Gatilho: Identificação + Prova específica + Emoção
       ══════════════════════════════════════════════════════ */}
       <section id="depoimentos" className="py-20 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
             <span className="text-sm font-semibold text-violet-600 bg-violet-50 px-3 py-1 rounded-full border border-violet-100">
-              O que as famílias falam
+              Pais como você falam
             </span>
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mt-4 leading-tight">
-              Resultados reais de famílias reais.
+              A mudança que eles não esperavam.
             </h2>
           </div>
 
@@ -483,28 +424,28 @@ export default function Home() {
                 name: "Ana Paula M.",
                 city: "São Paulo, SP",
                 role: "Mãe de 2 filhos (7 e 10 anos)",
-                quote: "Em 2 semanas meu filho de 10 anos começou a pedir para fazer tarefas. PEDINDO. Nunca pensei que veria isso acontecer. O KidsTasks mudou completamente a dinâmica da nossa casa.",
+                quote: "Meu filho de 10 anos começou a me pedir para criar novas tarefas porque queria mais pontos. PEDINDO tarefas. Nunca imaginei que um dia eu ouviria isso. O clima em casa mudou completamente.",
                 initials: "A",
                 color: "from-violet-500 to-purple-600",
-                result: "2 semanas para transformar a rotina",
+                result: "Filho pedindo mais tarefas em 2 semanas",
               },
               {
                 name: "Carlos e Renata F.",
                 city: "Belo Horizonte, MG",
                 role: "Pais de 3 filhos (6, 9 e 13 anos)",
-                quote: "Com 3 filhos era caos. Cada um com uma história diferente sobre as tarefas. Agora temos um sistema transparente — eles sabem exatamente o que precisam fazer e o que vão ganhar.",
+                quote: "Com 3 filhos, a sensação era de caos constante. O KidsTasks deu estrutura para a nossa família inteira. Agora cada um sabe o que precisa fazer e o que vai ganhar — sem choro, sem drama.",
                 initials: "C",
                 color: "from-blue-500 to-cyan-500",
-                result: "3 filhos, zero discussão sobre tarefas",
+                result: "3 filhos organizados, zero drama",
               },
               {
                 name: "Mariana S.",
                 city: "Curitiba, PR",
                 role: "Mãe de 1 filho (8 anos)",
-                quote: "Meu filho é viciado em jogos. Quando mostrei o KidsTasks, ele falou 'isso é um RPG de verdade!'. Em um mês ele estava completando tarefas que eu nunca consegui fazer ele fazer antes.",
+                quote: "Meu filho falou 'mãe, isso é um RPG da vida real!'. Aquilo me emocionou. Ele não sabe, mas está aprendendo responsabilidade, disciplina e o valor do esforço — achando que está brincando.",
                 initials: "M",
                 color: "from-emerald-500 to-teal-500",
-                result: "Filho apelida de 'RPG da vida real'",
+                result: "Aprendendo responsabilidade sem perceber",
               },
             ].map((t) => (
               <div key={t.name} className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
@@ -545,8 +486,8 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          PREÇOS — Pricing com urgência e âncora
-          Gatilho: Ancoragem + Escassez + Reciprocidade
+          PREÇOS — Âncora emocional + Investimento na educação
+          Gatilho: Reframing de custo + Escassez + Reciprocidade
       ══════════════════════════════════════════════════════ */}
       <section id="precos" className="py-20 px-6 bg-gray-50">
         <div className="max-w-5xl mx-auto">
@@ -557,11 +498,11 @@ export default function Home() {
           </div>
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
-              Menos que uma pizza.<br />
-              <span style={{ color: "#7c3aed" }}>Resultado que dura anos.</span>
+              Investir em filhos responsáveis.<br />
+              <span style={{ color: "#7c3aed" }}>Por menos de R$0,33 por dia.</span>
             </h2>
             <p className="text-gray-500 text-lg max-w-xl mx-auto">
-              Por menos de R$0,33 por dia, você transforma a rotina de toda a sua família.
+              Cursos de educação financeira custam centenas de reais. O KidsTasks ensina tudo isso — de verdade, no dia a dia, jogando junto com você.
             </p>
           </div>
 
@@ -572,20 +513,15 @@ export default function Home() {
               <div className="mb-1">
                 <span className="text-4xl font-extrabold text-gray-900">R$0</span>
               </div>
-              <p className="text-gray-400 text-sm mb-6">Para sempre, sem cartão</p>
+              <p className="text-gray-400 text-sm mb-6">Comece hoje, sem compromisso</p>
               <ul className="space-y-3 mb-8">
-                {[
-                  "1 filho cadastrado",
-                  "5 tarefas ativas",
-                  "Carteira financeira básica",
-                  "Gamificação: pontos e níveis",
-                ].map((f) => (
+                {["1 filho", "5 tarefas", "Pontos e níveis básicos", "Aprovação de tarefas"].map((f) => (
                   <li key={f} className="flex items-center gap-2.5 text-gray-600 text-sm">
                     <span className="w-4 h-4 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-xs flex-shrink-0">✓</span>
                     {f}
                   </li>
                 ))}
-                {["Filhos ilimitados", "Poupança com metas", "Loja de recompensas", "Badges e conquistas"].map((f) => (
+                {["Filhos ilimitados", "Loja de recompensas", "Badges e conquistas", "Relatórios"].map((f) => (
                   <li key={f} className="flex items-center gap-2.5 text-gray-300 text-sm line-through">
                     <span className="w-4 h-4 rounded-full bg-gray-50 flex items-center justify-center text-xs flex-shrink-0">✗</span>
                     {f}
@@ -613,15 +549,13 @@ export default function Home() {
               <p className="text-white/40 text-sm mb-6">Equivale a R$0,66 por dia</p>
               <ul className="space-y-3 mb-8">
                 {[
-                  "Até 5 filhos cadastrados",
-                  "Tarefas ilimitadas com recorrência",
-                  "Carteira financeira completa",
-                  "Poupança com metas por filho",
-                  "Loja de pontos e resgates",
-                  "Badges e metas especiais",
-                  "Co-responsáveis (editor e leitor)",
-                  "Impressão de relatório de tarefas",
-                  "Suporte por e-mail",
+                  "Até 5 filhos",
+                  "Tarefas ilimitadas",
+                  "Loja de recompensas",
+                  "Badges e conquistas",
+                  "Relatórios detalhados",
+                  "Múltiplos cuidadores",
+                  "Suporte por email",
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-2.5 text-white/80 text-sm">
                     <span className="w-4 h-4 rounded-full bg-violet-400/30 text-violet-300 flex items-center justify-center text-xs flex-shrink-0">✓</span>
@@ -651,20 +585,15 @@ export default function Home() {
               <p className="text-gray-400 text-sm mb-1">
                 <span className="line-through">R$238,80</span>
                 {" "}→{" "}
-                <span className="text-emerald-600 font-bold">R$9,90/mês</span>
+                <span className="text-emerald-600 font-bold">6 meses grátis</span>
               </p>
-              <p className="text-gray-300 text-xs mb-6">2 meses grátis inclusos</p>
+              <p className="text-gray-300 text-xs mb-6">R$9,90/mês efetivo</p>
               <ul className="space-y-3 mb-8">
                 {[
-                  "Até 5 filhos cadastrados",
-                  "Tarefas ilimitadas com recorrência",
-                  "Carteira financeira completa",
-                  "Poupança com metas por filho",
-                  "Loja de pontos e resgates",
-                  "Badges e metas especiais",
-                  "Co-responsáveis (editor e leitor)",
-                  "Impressão de relatório de tarefas",
-                  "Suporte por e-mail",
+                  "Tudo do plano Mensal",
+                  "2 meses grátis inclusos",
+                  "Prioridade no suporte",
+                  "Acesso antecipado a novidades",
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-2.5 text-gray-600 text-sm">
                     <span className="w-4 h-4 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-xs flex-shrink-0">✓</span>
@@ -681,18 +610,18 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          GARANTIA — Inversão de risco
-          Gatilho: Remoção do risco + Confiança
+          GARANTIA — Inversão de risco com tom emocional
+          Gatilho: Segurança + Confiança + Reciprocidade
       ══════════════════════════════════════════════════════ */}
       <section className="py-16 px-6 bg-white">
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex flex-col items-center gap-4 p-8 rounded-3xl border-2 border-green-200 bg-green-50">
             <div className="text-6xl">🛡️</div>
             <h3 className="text-2xl font-extrabold text-gray-900">
-              Garantia de 30 dias — sem perguntas.
+              30 dias para ver a diferença. Senão, devolvemos tudo.
             </h3>
             <p className="text-gray-600 leading-relaxed max-w-lg">
-              Se em 30 dias você não ver uma melhora real na rotina da sua família, devolvemos 100% do seu dinheiro. Sem burocracia, sem questionamentos. Confiamos nos nossos resultados.
+              Sabemos que mudar a rotina da família leva um tempo. Por isso, você tem 30 dias para testar sem risco. Se não sentir uma mudança real, devolvemos 100% do seu dinheiro — sem burocracia, sem questionamento.
             </p>
             <Link
               href="/register"
@@ -706,8 +635,8 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          FAQ — Quebra de objeções
-          Gatilho: Clareza + Remoção de barreiras
+          FAQ — Objeções reais dos pais
+          Gatilho: Empatia + Clareza + Remoção de barreiras
       ══════════════════════════════════════════════════════ */}
       <section id="faq" className="py-20 px-6 bg-gray-50">
         <div className="max-w-3xl mx-auto">
@@ -721,27 +650,27 @@ export default function Home() {
             {[
               {
                 q: "Meu filho tem 6 anos. Vai conseguir usar?",
-                a: "Sim! O KidsTasks foi desenvolvido para crianças a partir de 5 anos. A interface do filho é simples, visual e com emojis. Para os menores, os pais gerenciam as tarefas e mostram os resultados juntos.",
+                a: "Sim! O KidsTasks foi feito para crianças a partir de 5 anos. A interface do filho é simples, visual e cheia de emojis. Com os menores, os pais mostram as missões juntos e a experiência vira um momento de conexão.",
               },
               {
-                q: "Funciona com filhos que não têm smartphone?",
-                a: "Perfeitamente. Os pais gerenciam tudo pelo navegador ou celular. A aprovação de tarefas fica na mão de quem tem o dispositivo — basta o filho avisar que concluiu.",
+                q: "Meu filho não tem smartphone. Funciona assim mesmo?",
+                a: "Perfeitamente. Os pais gerenciam tudo pelo celular ou computador. O filho avisa quando conclui — você aprova. Sem complicação, sem precisar de um segundo dispositivo.",
               },
               {
                 q: "E se eu quiser cancelar?",
-                a: "Cancele quando quiser, direto no painel, em menos de 1 minuto. Sem multa, sem burocracia. Seus dados ficam disponíveis por 30 dias após o cancelamento.",
+                a: "Você cancela quando quiser, em menos de 1 minuto, direto no painel. Sem multa, sem ligue para cancelar. Seus dados ficam disponíveis por 30 dias após o cancelamento.",
               },
               {
-                q: "O sistema é seguro? Meus dados ficam protegidos?",
-                a: "Sim. Usamos criptografia SSL, os dados ficam em servidores no Brasil e seguimos rigorosamente a LGPD. Nunca vendemos ou compartilhamos dados da sua família.",
+                q: "Meus dados e os dados dos meus filhos ficam seguros?",
+                a: "Totalmente. Usamos criptografia SSL, dados hospedados no Brasil e seguimos a LGPD com rigor. Nunca compartilhamos informações da sua família com terceiros.",
               },
               {
-                q: "Posso usar em família com filhos de idades bem diferentes?",
-                a: "Absolutamente. Você configura tarefas e dificuldades individualmente por filho. Um de 7 anos tem missões diferentes do de 13 anos — cada um no seu ritmo.",
+                q: "Tenho filhos com idades bem diferentes. Funciona para todos?",
+                a: "Absolutamente. Você configura tarefas e recompensas individualmente para cada filho. O de 7 anos tem missões diferentes do de 14 — cada criança no seu ritmo, na sua fase.",
               },
               {
                 q: "Como funciona o plano gratuito?",
-                a: "O plano gratuito é para sempre, sem trial. Você pode adicionar 1 filho com até 5 tarefas. Quando quiser expandir para mais filhos, tarefas ilimitadas e a loja de recompensas, basta fazer upgrade.",
+                a: "É gratuito para sempre, sem trial que expira. Você gerencia 1 filho com até 5 tarefas. Quando quiser mais filhos, tarefas ilimitadas e a loja de recompensas completa, é só fazer o upgrade quando estiver pronto.",
               },
             ].map((faq) => (
               <details
@@ -762,8 +691,8 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          CTA FINAL — Fechamento
-          Gatilho: Urgência + Reciprocidade + Transformação
+          CTA FINAL — Apelo à identidade parental
+          Gatilho: Legado + Urgência + Transformação emocional
       ══════════════════════════════════════════════════════ */}
       <section
         className="py-24 px-6 relative overflow-hidden"
@@ -779,7 +708,7 @@ export default function Home() {
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           <div className="text-6xl mb-6 animate-float inline-block">🏆</div>
           <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-6">
-            Comece hoje.
+            O melhor presente que você
             <br />
             <span style={{
               background: "linear-gradient(90deg, #fbbf24, #f472b6)",
@@ -787,11 +716,11 @@ export default function Home() {
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
             }}>
-              Veja a mudança em 30 dias.
+              pode dar aos seus filhos.
             </span>
           </h2>
           <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-            Cada dia que passa sem um sistema é um dia de hábitos ruins sendo formados. Sua família merece harmonia. Seus filhos merecem estrutura. Você merece paz.
+            Responsabilidade, disciplina e autoconfiança não se ensinam com palestra — se ensinam no dia a dia. Você já tem o que precisa para começar. Falta só o sistema.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">

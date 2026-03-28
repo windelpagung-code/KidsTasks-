@@ -22,6 +22,7 @@ interface SavingsTx {
 type Preset = "7d" | "30d" | "thisMonth" | "lastMonth" | "thisYear" | "all";
 
 const emptyForm = { type: "credit" as "credit" | "debit", amount: "", description: "" };
+const emptyConvertForm = { points: "", rate: "" };
 const emptyEditForm = { id: "", type: "credit" as "credit" | "debit", amount: "", description: "" };
 const emptySavingsForm = { type: "deposit" as "deposit" | "withdraw", amount: "", description: "" };
 const emptyGoalForm = { goalName: "", goalAmount: "" };
@@ -79,6 +80,10 @@ export default function WalletPage() {
   const [editSavingsTx, setEditSavingsTx] = useState(emptyEditSavingsTx);
   const [editSavingsSaving, setEditSavingsSaving] = useState(false);
   const [deletingSavingsTx, setDeletingSavingsTx] = useState<string | null>(null);
+  const [showConvertForm, setShowConvertForm] = useState(false);
+  const [convertForm, setConvertForm] = useState(emptyConvertForm);
+  const [converting, setConverting] = useState(false);
+  const [convertError, setConvertError] = useState("");
   const [preset, setPreset] = useState<Preset>("thisMonth");
   const [dateFrom, setDateFrom] = useState(PRESETS.thisMonth.from);
   const [dateTo, setDateTo] = useState(PRESETS.thisMonth.to);
@@ -327,6 +332,27 @@ export default function WalletPage() {
     } catch { /* ignore */ } finally { setDeletingSavingsTx(null); }
   }
 
+  async function handleConvertPoints(e: React.FormEvent) {
+    e.preventDefault();
+    setConverting(true);
+    setConvertError("");
+    try {
+      await api.post(`/wallet/${selected}/convert-points`, {
+        points: parseInt(convertForm.points),
+        rate: parseFloat(convertForm.rate),
+      });
+      setShowConvertForm(false);
+      setConvertForm(emptyConvertForm);
+      loadWallet();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string | string[] } } };
+      const msg = e.response?.data?.message;
+      setConvertError(Array.isArray(msg) ? msg[0] : msg || "Erro ao converter pontos");
+    } finally {
+      setConverting(false);
+    }
+  }
+
   async function handlePayAllowance() {
     if (!selected) return;
     setPayingAllowance(true);
@@ -359,6 +385,10 @@ export default function WalletPage() {
             <button onClick={handlePayAllowance} disabled={payingAllowance}
               className="bg-green-600 text-white px-3 py-2 rounded-xl font-semibold hover:bg-green-700 transition text-sm disabled:opacity-50">
               {payingAllowance ? "..." : "💸 Pagar mesada"}
+            </button>
+            <button onClick={() => { setShowConvertForm(!showConvertForm); setConvertError(""); }}
+              className="bg-amber-500 text-white px-3 py-2 rounded-xl font-semibold hover:bg-amber-600 transition text-sm">
+              ⭐ Converter pontos
             </button>
             <button onClick={() => { setShowForm(!showForm); setError(""); }}
               className="bg-purple-600 text-white px-3 py-2 rounded-xl font-semibold hover:bg-purple-700 transition text-sm">
@@ -587,6 +617,52 @@ export default function WalletPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* Convert points form */}
+          {showConvertForm && balance && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-amber-800">⭐ Converter pontos em crédito</h3>
+                <span className="text-sm text-amber-600 font-medium">{balance.totalPoints} pontos disponíveis</span>
+              </div>
+              <form onSubmit={handleConvertPoints} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-amber-700 mb-1">Pontos a converter</label>
+                  <input
+                    required type="number" min={1} max={balance.totalPoints}
+                    value={convertForm.points}
+                    onChange={(e) => setConvertForm({ ...convertForm, points: e.target.value })}
+                    className="w-full border border-amber-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm"
+                    placeholder="Ex: 100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-amber-700 mb-1">Taxa (R$ por ponto)</label>
+                  <input
+                    required type="number" min={0.01} step={0.01}
+                    value={convertForm.rate}
+                    onChange={(e) => setConvertForm({ ...convertForm, rate: e.target.value })}
+                    className="w-full border border-amber-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm"
+                    placeholder="Ex: 0,10"
+                  />
+                </div>
+                <div className="flex flex-col justify-end gap-2">
+                  {convertForm.points && convertForm.rate && (
+                    <p className="text-sm font-semibold text-amber-700 text-center">
+                      = R$ {(parseInt(convertForm.points || "0") * parseFloat(convertForm.rate || "0")).toFixed(2)} de crédito
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setShowConvertForm(false)} className="flex-1 px-3 py-2.5 rounded-xl border border-amber-300 text-amber-700 hover:bg-amber-100 transition text-sm">Cancelar</button>
+                    <button type="submit" disabled={converting} className="flex-1 px-3 py-2.5 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 transition disabled:opacity-50 text-sm">
+                      {converting ? "..." : "Converter"}
+                    </button>
+                  </div>
+                </div>
+              </form>
+              {convertError && <p className="text-red-500 text-sm mt-2">{convertError}</p>}
             </div>
           )}
 

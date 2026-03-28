@@ -40,6 +40,12 @@ export class WalletController {
     return this.walletService.deleteTransaction(req.user.tenantId, childId, txId);
   }
 
+  @Post(':childId/convert-points')
+  @ApiOperation({ summary: 'Converter pontos em crédito na carteira' })
+  convertPoints(@Req() req, @Param('childId') childId: string, @Body() body: { points: number; rate: number }) {
+    return this.walletService.convertPoints(req.user.tenantId, childId, req.user.id, body);
+  }
+
   @Post(':childId/pay-allowance')
   @ApiOperation({ summary: 'Registrar pagamento de mesada' })
   payAllowance(@Req() req, @Param('childId') childId: string) {
