@@ -34,7 +34,7 @@ export default function Home() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-gray-600 hover:text-gray-900 text-sm font-medium transition hidden sm:block">
+            <Link href="/login" className="text-gray-600 hover:text-gray-900 text-sm font-medium transition">
               Entrar
             </Link>
             <Link
@@ -207,7 +207,7 @@ export default function Home() {
               },
               {
                 icon: "💸",
-                title: "Mesada sem accountability",
+                title: "Mesada sem cobranças",
                 desc: "Dá a mesada na esperança de motivar. Ele pega o dinheiro e as tarefas continuam sem fazer.",
               },
               {

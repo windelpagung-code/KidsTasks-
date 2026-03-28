@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import api from "@/lib/api";
+import heic2any from "heic2any";
 
 // Lazy load emoji picker (heavy component)
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false, loading: () => <div className="p-4 text-center text-gray-400 text-sm">Carregando emojis...</div> });
@@ -32,36 +33,22 @@ const weekDays = [
 ];
 
 /** Resize an image File to max 200x200, return as base64 JPEG string.
- *  Supports HEIC/HEIF (iPhone) via createImageBitmap, with fallbacks. */
+ *  Suporta HEIC/HEIF (iPhone) via heic2any. */
 async function resizeImage(file: File): Promise<string> {
   const MAX = 200;
 
-  function drawBitmapSource(source: HTMLImageElement | ImageBitmap): string {
-    const sw = "width" in source ? source.width : (source as ImageBitmap).width;
-    const sh = "height" in source ? source.height : (source as ImageBitmap).height;
-    let w = sw, h = sh;
-    if (w > h) { h = Math.round((h / w) * MAX); w = MAX; }
-    else { w = Math.round((w / h) * MAX); h = MAX; }
-    const canvas = document.createElement("canvas");
-    canvas.width = w; canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("no-ctx");
-    ctx.drawImage(source as CanvasImageSource, 0, 0, w, h);
-    return canvas.toDataURL("image/jpeg", 0.85);
+  // Convert HEIC/HEIF to JPEG first
+  const isHeic = file.type === "image/heic" || file.type === "image/heif"
+    || file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif");
+
+  let sourceFile: File = file;
+  if (isHeic) {
+    const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
+    sourceFile = new File([converted as Blob], "photo.jpg", { type: "image/jpeg" });
   }
 
-  // Strategy 1: createImageBitmap — handles HEIC natively on iOS 15+ and modern Chrome
-  if (typeof createImageBitmap !== "undefined") {
-    try {
-      const bitmap = await createImageBitmap(file);
-      const result = drawBitmapSource(bitmap);
-      bitmap.close();
-      return result;
-    } catch { /* fall through */ }
-  }
-
-  // Strategy 2: object URL → <img> (works for JPEG/PNG/WEBP on all browsers)
-  const objectUrl = URL.createObjectURL(file);
+  // Load via object URL and draw to canvas
+  const objectUrl = URL.createObjectURL(sourceFile);
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const i = new Image();
@@ -69,25 +56,19 @@ async function resizeImage(file: File): Promise<string> {
       i.onerror = reject;
       i.src = objectUrl;
     });
-    return drawBitmapSource(img);
-  } catch { /* fall through */ } finally {
+
+    let w = img.width, h = img.height;
+    if (w > h) { h = Math.round((h / w) * MAX); w = MAX; }
+    else { w = Math.round((w / h) * MAX); h = MAX; }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL("image/jpeg", 0.85);
+  } finally {
     URL.revokeObjectURL(objectUrl);
   }
-
-  // Strategy 3: FileReader data URL → <img> (last resort)
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target?.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-  const img2 = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const i = new Image();
-    i.onload = () => resolve(i);
-    i.onerror = reject;
-    i.src = dataUrl;
-  });
-  return drawBitmapSource(img2);
 }
 
 function isImageData(url?: string) {
