@@ -1,0 +1,395 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Plan {
+  free
+  monthly
+  annual
+}
+
+enum TenantStatus {
+  active
+  suspended
+  cancelled
+}
+
+enum UserRole {
+  admin
+  editor
+  viewer
+}
+
+enum Difficulty {
+  easy
+  medium
+  hard
+}
+
+enum RecurrenceType {
+  daily
+  weekly
+  biweekly
+  monthly
+  recurring
+  one_time
+}
+
+enum TaskStatus {
+  pending
+  done
+  not_done
+  approved
+}
+
+enum AllowanceRule {
+  proportional
+  threshold
+}
+
+enum AllowancePeriodStatus {
+  open
+  closed
+  paid
+}
+
+enum WalletTransactionType {
+  credit
+  debit
+}
+
+enum RedemptionStatus {
+  pending
+  approved
+  rejected
+}
+
+model Tenant {
+  id                   String       @id @default(cuid())
+  name                 String
+  plan                 Plan         @default(free)
+  stripeCustomerId     String?      @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?      @map("stripe_subscription_id")
+  subscriptionStatus   String?      @map("subscription_status")
+  currentPeriodEnd     DateTime?    @map("current_period_end")
+  status               TenantStatus @default(active)
+  currency             String       @default("BRL")
+  locale               String       @default("pt-BR")
+  createdAt            DateTime     @default(now()) @map("created_at")
+  updatedAt            DateTime     @updatedAt @map("updated_at")
+
+  users        User[]
+  children     Child[]
+  tasks        Task[]
+  storeItems   StoreItem[]
+  auditLogs    AuditLog[]
+
+  @@map("tenants")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  name            String
+  email           String    @unique
+  passwordHash    String?   @map("password_hash")
+  role                UserRole  @default(admin)
+  avatarUrl           String?   @map("avatar_url")
+  phone               String?
+  timezone            String    @default("America/Sao_Paulo")
+  emailVerifiedAt     DateTime? @map("email_verified_at")
+  googleId            String?   @unique @map("google_id")
+  appleId             String?   @unique @map("apple_id")
+  fcmToken            String?   @map("fcm_token")
+  resetToken          String?   @unique @map("reset_token")
+  resetTokenExpiresAt DateTime? @map("reset_token_expires_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  tenant               Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  approvedAssignments  TaskAssignment[]    @relation("ApprovedBy")
+  createdTasks         Task[]              @relation("CreatedBy")
+  walletTransactions   WalletTransaction[] @relation("CreatedBy")
+  notifications        Notification[]
+  createdGoals         SpecialGoal[]       @relation("CreatedBy")
+  resolvedRedemptions  StoreRedemption[]   @relation("ResolvedBy")
+  auditLogs            AuditLog[]
+  refreshTokens        RefreshToken[]
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Child {
+  id                 String        @id @default(cuid())
+  tenantId           String        @map("tenant_id")
+  name               String
+  nickname           String?
+  birthdate          DateTime
+  avatarUrl          String?       @map("avatar_url")
+  pinHash            String?       @map("pin_hash")
+  level              Int           @default(1)
+  totalPoints        Int           @default(0) @map("total_points")
+  allowanceAmount    Decimal       @default(0) @map("allowance_amount") @db.Decimal(10, 2)
+  allowanceFrequency String        @default("monthly") @map("allowance_frequency")
+  allowanceRule      AllowanceRule @default(proportional) @map("allowance_rule")
+  thresholdPercent   Int           @default(50) @map("threshold_percent")
+  allowanceDay       Int           @default(5) @map("allowance_day")
+  vacationMode       Boolean       @default(false) @map("vacation_mode")
+  vacationStart      DateTime?     @map("vacation_start")
+  vacationEnd        DateTime?     @map("vacation_end")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  taskAssignments   TaskAssignment[]
+  allowancePeriods  AllowancePeriod[]
+  walletTransactions WalletTransaction[]
+  childBadges       ChildBadge[]
+  storeRedemptions  StoreRedemption[]
+  notifications     Notification[]
+  specialGoals      SpecialGoal[]
+  savingsAccount    SavingsAccount?
+
+  @@map("children")
+}
+
+model Task {
+  id             String         @id @default(cuid())
+  tenantId       String         @map("tenant_id")
+  title          String
+  description    String?        @db.Text
+  icon           String?
+  category       String?
+  difficulty     Difficulty     @default(easy)
+  basePoints     Int            @default(10) @map("base_points")
+  recurrenceType RecurrenceType @map("recurrence_type")
+  recurrenceDays String?        @map("recurrence_days") @db.Text
+  dueDate        DateTime?      @map("due_date")
+  isActive       Boolean        @default(true) @map("is_active")
+  sortOrder      Int            @default(0) @map("sort_order")
+  createdBy      String         @map("created_by")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator     User             @relation("CreatedBy", fields: [createdBy], references: [id])
+  assignments TaskAssignment[]
+
+  @@map("tasks")
+}
+
+model TaskAssignment {
+  id          String     @id @default(cuid())
+  taskId      String     @map("task_id")
+  childId     String     @map("child_id")
+  periodStart DateTime   @map("period_start")
+  periodEnd   DateTime   @map("period_end")
+  status      TaskStatus @default(pending)
+  completedAt DateTime?  @map("completed_at")
+  approvedBy  String?    @map("approved_by")
+  pointsEarned Int       @default(0) @map("points_earned")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  task     Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  child    Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  approver User? @relation("ApprovedBy", fields: [approvedBy], references: [id])
+
+  @@map("task_assignments")
+}
+
+model AllowancePeriod {
+  id              String                @id @default(cuid())
+  childId         String                @map("child_id")
+  periodStart     DateTime              @map("period_start")
+  periodEnd       DateTime              @map("period_end")
+  targetPoints    Int                   @map("target_points")
+  earnedPoints    Int                   @default(0) @map("earned_points")
+  percentAchieved Decimal               @default(0) @map("percent_achieved") @db.Decimal(5, 2)
+  amountDue       Decimal               @default(0) @map("amount_due") @db.Decimal(10, 2)
+  amountPaid      Decimal               @default(0) @map("amount_paid") @db.Decimal(10, 2)
+  status          AllowancePeriodStatus @default(open)
+  paidAt          DateTime?             @map("paid_at")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@map("allowance_periods")
+}
+
+model WalletTransaction {
+  id           String                @id @default(cuid())
+  childId      String                @map("child_id")
+  type         WalletTransactionType
+  amount       Decimal               @db.Decimal(10, 2)
+  pointsAmount Int                   @default(0) @map("points_amount")
+  description  String
+  referenceId  String?               @map("reference_id")
+  createdBy    String                @map("created_by")
+  createdAt    DateTime              @default(now()) @map("created_at")
+
+  child   Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  creator User  @relation("CreatedBy", fields: [createdBy], references: [id])
+
+  @@map("wallet_transactions")
+}
+
+model Badge {
+  id             String   @id @default(cuid())
+  name           String
+  description    String
+  icon           String
+  conditionType  String   @map("condition_type")
+  conditionValue Int      @map("condition_value")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  childBadges ChildBadge[]
+
+  @@map("badges")
+}
+
+model ChildBadge {
+  id       String   @id @default(cuid())
+  childId  String   @map("child_id")
+  badgeId  String   @map("badge_id")
+  earnedAt DateTime @default(now()) @map("earned_at")
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@unique([childId, badgeId])
+  @@map("child_badges")
+}
+
+model StoreItem {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  description String?
+  icon        String?
+  pointsCost  Int      @map("points_cost")
+  stockLimit  Int?     @map("stock_limit")
+  stockUsed   Int      @default(0) @map("stock_used")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  redemptions StoreRedemption[]
+
+  @@map("store_items")
+}
+
+model StoreRedemption {
+  id          String           @id @default(cuid())
+  childId     String           @map("child_id")
+  itemId      String           @map("item_id")
+  status      RedemptionStatus @default(pending)
+  requestedAt DateTime         @default(now()) @map("requested_at")
+  resolvedAt  DateTime?        @map("resolved_at")
+  resolvedBy  String?          @map("resolved_by")
+
+  child    Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+  item     StoreItem @relation(fields: [itemId], references: [id])
+  resolver User?     @relation("ResolvedBy", fields: [resolvedBy], references: [id])
+
+  @@map("store_redemptions")
+}
+
+model Notification {
+  id           String   @id @default(cuid())
+  userId       String?  @map("user_id")
+  childId      String?  @map("child_id")
+  type         String
+  title        String
+  body         String   @db.Text
+  isRead       Boolean  @default(false) @map("is_read")
+  sentChannels String   @map("sent_channels") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  child Child? @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model SpecialGoal {
+  id           String   @id @default(cuid())
+  childId      String   @map("child_id")
+  title        String
+  bonusPoints  Int      @map("bonus_points")
+  targetPoints Int      @map("target_points")
+  deadline     DateTime?
+  status       String   @default("active")
+  createdBy    String   @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  child   Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  creator User  @relation("CreatedBy", fields: [createdBy], references: [id])
+
+  @@map("special_goals")
+}
+
+model SavingsAccount {
+  id         String   @id @default(cuid())
+  childId    String   @unique @map("child_id")
+  balance    Decimal  @default(0) @db.Decimal(10, 2)
+  goalAmount Decimal? @map("goal_amount") @db.Decimal(10, 2)
+  goalName   String?  @map("goal_name")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  child        Child                @relation(fields: [childId], references: [id], onDelete: Cascade)
+  transactions SavingsTransaction[]
+
+  @@map("savings_accounts")
+}
+
+model SavingsTransaction {
+  id          String   @id @default(cuid())
+  accountId   String   @map("account_id")
+  type        String
+  amount      Decimal  @db.Decimal(10, 2)
+  description String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  account SavingsAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("savings_transactions")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  tenantId   String   @map("tenant_id")
+  userId     String   @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  oldValues  String?  @map("old_values") @db.Text
+  newValues  String?  @map("new_values") @db.Text
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("audit_log")
+}
