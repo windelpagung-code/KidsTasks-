@@ -40,6 +40,11 @@ async function createApp() {
 }
 
 export default async (req: any, res: any) => {
-  const app = await createApp();
-  app(req, res);
+  try {
+    const app = await createApp();
+    app(req, res);
+  } catch (error: any) {
+    console.error('NestJS init error:', error);
+    res.status(500).json({ error: error.message, stack: error.stack });
+  }
 };
