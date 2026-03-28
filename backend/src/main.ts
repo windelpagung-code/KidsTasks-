@@ -32,7 +32,15 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('api/docs', app, document, {
+    customSiteTitle: 'KidsTasks API',
+    customfavIcon: 'https://kidstasks1.vercel.app/logo.png',
+    customCss: `
+      .swagger-ui .topbar { background: linear-gradient(135deg, #0f0a1e, #3b1f7a); }
+      .swagger-ui .topbar-wrapper img { content: url('https://kidstasks1.vercel.app/logo.png'); height: 40px; width: auto; }
+      .swagger-ui .topbar-wrapper .link span { display: none; }
+    `,
+  });
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

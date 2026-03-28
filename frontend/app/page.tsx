@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 /* ─────────────────────────────────────────────────────────────
    KidsTasks — Landing Page
@@ -16,13 +17,8 @@ export default function Home() {
       ══════════════════════════════════════════════════════ */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 py-3.5 flex justify-between items-center">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shadow-sm"
-              style={{ background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
-            >
-              🎯
-            </div>
+          <div className="flex items-center gap-2">
+            <Image src="/logo.png" alt="KidsTasks" width={38} height={38} />
             <span className="font-extrabold text-gray-900 text-lg tracking-tight">KidsTasks</span>
           </div>
 

@@ -12,8 +12,8 @@ export class GamificationController {
 
   @Get('ranking')
   @ApiOperation({ summary: 'Ranking entre irmãos' })
-  @ApiQuery({ name: 'period', enum: ['weekly', 'monthly'], required: false })
-  getRanking(@Req() req, @Query('period') period: 'weekly' | 'monthly' = 'weekly') {
+  @ApiQuery({ name: 'period', enum: ['daily', 'weekly', 'monthly', 'all'], required: false })
+  getRanking(@Req() req, @Query('period') period: 'daily' | 'weekly' | 'monthly' | 'all' = 'weekly') {
     return this.gamificationService.getRanking(req.user.tenantId, period);
   }
 

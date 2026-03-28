@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import api, { clearTokens } from "@/lib/api";
 import { useUser, isAdmin } from "@/lib/useUser";
@@ -44,10 +45,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         className="text-white px-6 py-3.5 flex justify-between items-center shadow-lg flex-shrink-0"
         style={{ background: "linear-gradient(135deg, #0f0a1e 0%, #1e1250 50%, #3b1f7a 100%)" }}
       >
-        <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 glass rounded-xl flex items-center justify-center text-base">
-            🎯
-          </div>
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Image src="/logo.png" alt="KidsTasks" width={36} height={36} className="rounded-lg" />
           <span className="font-extrabold text-base tracking-tight" style={{ fontFamily: "var(--font-jakarta)" }}>
             KidsTasks
           </span>

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
 
@@ -58,9 +58,27 @@ const AVATAR_COLORS = [
   "from-pink-500 to-rose-500",
 ];
 
+type RankingPeriod = "daily" | "weekly" | "monthly" | "all";
+
+interface RankingEntry {
+  child: { id: string; name: string; avatarUrl?: string; level: number };
+  periodPoints: number;
+  totalPoints: number;
+}
+
+const RANKING_PERIODS: { value: RankingPeriod; label: string }[] = [
+  { value: "daily",   label: "Hoje" },
+  { value: "weekly",  label: "Semana" },
+  { value: "monthly", label: "Mês" },
+  { value: "all",     label: "Geral" },
+];
+
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rankingPeriod, setRankingPeriod] = useState<RankingPeriod>("weekly");
+  const [ranking, setRanking] = useState<RankingEntry[]>([]);
+  const [rankingLoading, setRankingLoading] = useState(false);
 
   useEffect(() => {
     api
@@ -69,6 +87,16 @@ export default function DashboardPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  const loadRanking = useCallback(() => {
+    setRankingLoading(true);
+    api.get(`/gamification/ranking?period=${rankingPeriod}`)
+      .then((r) => setRanking(r.data))
+      .catch(() => setRanking([]))
+      .finally(() => setRankingLoading(false));
+  }, [rankingPeriod]);
+
+  useEffect(() => { loadRanking(); }, [loadRanking]);
 
   if (loading) {
     return (
@@ -289,41 +317,53 @@ export default function DashboardPage() {
       )}
 
       {/* ── Ranking ─────────────────────────────────────────── */}
-      {data?.children && data.children.length > 1 && (() => {
-        const ranked = [...data.children].sort((a, b) => b.totalPoints - a.totalPoints);
-        const medals = ["🥇", "🥈", "🥉"];
-        return (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="text-base font-bold text-gray-900 mb-4" style={{ fontFamily: "var(--font-jakarta)" }}>
+      {data?.children && data.children.length > 1 && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: "var(--font-jakarta)" }}>
               🏆 Ranking da família
             </h2>
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+              {RANKING_PERIODS.map((p) => (
+                <button key={p.value} onClick={() => setRankingPeriod(p.value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${rankingPeriod === p.value ? "bg-white text-violet-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {rankingLoading ? (
+            <div className="flex justify-center py-6"><div className="text-2xl animate-bounce">🏆</div></div>
+          ) : ranking.length === 0 ? (
+            <p className="text-center text-gray-400 text-sm py-6">Nenhuma tarefa concluída neste período.</p>
+          ) : (
             <div className="space-y-2">
-              {ranked.map((child, idx) => {
-                const color = AVATAR_COLORS[data.children.findIndex((c) => c.id === child.id) % AVATAR_COLORS.length];
-                const pct = xpPercent(child.totalPoints, child.level);
+              {ranking.map((entry, idx) => {
+                const dataChild = data.children.find((c) => c.id === entry.child.id);
+                const color = AVATAR_COLORS[(data.children.findIndex((c) => c.id === entry.child.id)) % AVATAR_COLORS.length];
+                const medals = ["🥇", "🥈", "🥉"];
+                const pct = dataChild ? xpPercent(dataChild.totalPoints, dataChild.level) : 0;
                 return (
-                  <div key={child.id} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? "bg-amber-50 border border-amber-100" : "bg-gray-50"}`}>
+                  <div key={entry.child.id} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? "bg-amber-50 border border-amber-100" : "bg-gray-50"}`}>
                     <span className="text-xl w-7 text-center flex-shrink-0">{medals[idx] || `${idx + 1}º`}</span>
-                    <ChildAvatar child={child} colorClass={color} size="sm" />
+                    <ChildAvatar child={entry.child} colorClass={color} size="sm" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="font-semibold text-gray-900 text-sm truncate">{child.name}</span>
-                        <span className="text-xs text-violet-600 font-bold whitespace-nowrap">⭐ {child.totalPoints} pts</span>
+                        <span className="font-semibold text-gray-900 text-sm truncate">{entry.child.name}</span>
+                        <span className="text-xs text-violet-600 font-bold whitespace-nowrap">⭐ {entry.periodPoints} pts</span>
                       </div>
-                      <div className="xp-bar">
-                        <div className="xp-bar-fill" style={{ width: `${pct}%` }} />
-                      </div>
+                      {pct > 0 && <div className="xp-bar"><div className="xp-bar-fill" style={{ width: `${pct}%` }} /></div>}
                     </div>
                     <span className="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                      Nv {child.level}
+                      Nv {entry.child.level}
                     </span>
                   </div>
                 );
               })}
             </div>
-          </div>
-        );
-      })()}
+          )}
+        </div>
+      )}
 
       {/* ── Quick actions ───────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
