@@ -31,44 +31,50 @@ const weekDays = [
   { value: "0", label: "Domingo" },
 ];
 
-/** Resize an image File to max 200x200, return as base64 JPEG string.
- *  Suporta HEIC/HEIF (iPhone) via heic2any. */
-async function resizeImage(file: File): Promise<string> {
-  const MAX = 200;
-
-  // Convert HEIC/HEIF to JPEG first (dynamic import avoids SSR issues)
-  const isHeic = file.type === "image/heic" || file.type === "image/heif"
-    || file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif");
-
-  let sourceFile: File = file;
-  if (isHeic) {
-    const heic2any = (await import("heic2any")).default;
-    const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
-    sourceFile = new File([converted as Blob], "photo.jpg", { type: "image/jpeg" });
-  }
-
-  // Load via object URL and draw to canvas
-  const objectUrl = URL.createObjectURL(sourceFile);
+async function loadImageFromFile(file: File): Promise<HTMLImageElement> {
+  const url = URL.createObjectURL(file);
   try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    return await new Promise<HTMLImageElement>((resolve, reject) => {
       const i = new Image();
       i.onload = () => resolve(i);
       i.onerror = reject;
-      i.src = objectUrl;
+      i.src = url;
     });
-
-    let w = img.width, h = img.height;
-    if (w > h) { h = Math.round((h / w) * MAX); w = MAX; }
-    else { w = Math.round((w / h) * MAX); h = MAX; }
-
-    const canvas = document.createElement("canvas");
-    canvas.width = w; canvas.height = h;
-    const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(img, 0, 0, w, h);
-    return canvas.toDataURL("image/jpeg", 0.85);
   } finally {
-    URL.revokeObjectURL(objectUrl);
+    URL.revokeObjectURL(url);
   }
+}
+
+function drawToJpeg(img: HTMLImageElement, MAX = 200): string {
+  let w = img.width, h = img.height;
+  if (w > h) { h = Math.round((h / w) * MAX); w = MAX; }
+  else { w = Math.round((w / h) * MAX); h = MAX; }
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", 0.85);
+}
+
+/** Resize an image File to max 200x200 JPEG. Suporta HEIC/HEIF do iPhone. */
+async function resizeImage(file: File): Promise<string> {
+  // Strategy 1: load directly (works for JPEG/PNG/WEBP)
+  try {
+    const img = await loadImageFromFile(file);
+    return drawToJpeg(img);
+  } catch { /* fall through — file might be HEIC */ }
+
+  // Strategy 2: convert with heic2any, then load
+  // (iOS às vezes envia HEIC com type vazio ou "image/heic")
+  try {
+    const heic2any = (await import("heic2any")).default;
+    const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
+    const converted = new File([blob as Blob], "photo.jpg", { type: "image/jpeg" });
+    const img = await loadImageFromFile(converted);
+    return drawToJpeg(img);
+  } catch { /* fall through */ }
+
+  throw new Error("unsupported-format");
 }
 
 function isImageData(url?: string) {
@@ -128,7 +134,7 @@ export default function ChildrenPage() {
       const base64 = await resizeImage(file);
       setForm((f) => ({ ...f, avatarUrl: base64 }));
     } catch {
-      setError("Não foi possível carregar a imagem. Tente salvar como JPG/PNG antes de enviar.");
+      setError("Formato não suportado. Tire uma foto diretamente pelo app ou converta para JPG/PNG.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
