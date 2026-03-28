@@ -12,6 +12,8 @@ RUN npm run build
 
 FROM node:20-alpine AS runner
 
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 COPY package*.json ./
