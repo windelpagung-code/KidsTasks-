@@ -179,24 +179,66 @@ export class TasksService {
   async approveTask(tenantId: string, userId: string, assignmentId: string) {
     const assignment = await this.prisma.taskAssignment.findFirst({
       where: { id: assignmentId, task: { tenantId } },
+      include: { task: true },
     });
     if (!assignment) throw new NotFoundException('Tarefa não encontrada');
 
-    return this.prisma.taskAssignment.update({
+    const result = await this.prisma.taskAssignment.update({
       where: { id: assignmentId },
       data: { status: 'approved', approvedBy: userId },
     });
+
+    // Para tarefas recorrentes, cria novo assignment pendente para o próximo ciclo
+    if (assignment.task.recurrenceType !== 'one_time') {
+      const now = new Date();
+      const nextStart = new Date(now);
+      nextStart.setDate(nextStart.getDate() + 1);
+      nextStart.setHours(0, 0, 0, 0);
+
+      if (nextStart < assignment.periodEnd) {
+        const alreadyPending = await this.prisma.taskAssignment.findFirst({
+          where: {
+            taskId: assignment.taskId,
+            childId: assignment.childId,
+            status: 'pending',
+          },
+        });
+
+        if (!alreadyPending) {
+          await this.prisma.taskAssignment.create({
+            data: {
+              taskId: assignment.taskId,
+              childId: assignment.childId,
+              periodStart: nextStart,
+              periodEnd: assignment.periodEnd,
+              status: 'pending',
+            },
+          });
+        }
+      }
+    }
+
+    return result;
   }
 
   async getChildTasks(tenantId: string, childId: string) {
-    return this.prisma.taskAssignment.findMany({
+    const assignments = await this.prisma.taskAssignment.findMany({
       where: {
         childId,
         task: { tenantId, isActive: true },
         child: { vacationMode: false },
       },
       include: { task: true, child: true },
-      orderBy: { task: { sortOrder: 'asc' } },
+      orderBy: [{ task: { sortOrder: 'asc' } }, { createdAt: 'desc' }],
+    });
+
+    // Para cada tarefa, retorna apenas o assignment mais recente
+    // Isso garante que tarefas recorrentes mostrem sempre o ciclo atual
+    const seen = new Set<string>();
+    return assignments.filter((a) => {
+      if (seen.has(a.taskId)) return false;
+      seen.add(a.taskId);
+      return true;
     });
   }
 
