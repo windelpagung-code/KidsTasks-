@@ -14,6 +14,12 @@ export class TasksService {
     return multipliers[difficulty] || 1;
   }
 
+  /** Retorna meia-noite UTC do dia especificado (ou hoje se não informado) */
+  private utcDayStart(date?: Date): Date {
+    const d = date ?? new Date();
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  }
+
   async create(tenantId: string, userId: string, dto: CreateTaskDto) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
 
@@ -183,9 +189,8 @@ export class TasksService {
 
   private async ensureNextCycle(taskId: string, childId: string, originalPeriodEnd: Date) {
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = this.utcDayStart();
 
-    // Usa periodStart como critério — é definido explicitamente por nós (não depende de createdAt)
     const alreadyToday = await this.prisma.taskAssignment.findFirst({
       where: { taskId, childId, status: 'pending', periodStart: { gte: todayStart } },
     });
@@ -194,7 +199,7 @@ export class TasksService {
     const newPeriodEnd =
       originalPeriodEnd > now
         ? originalPeriodEnd
-        : new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        : new Date(Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth() + 1, todayStart.getUTCDate()));
 
     await this.prisma.taskAssignment.create({
       data: { taskId, childId, periodStart: todayStart, periodEnd: newPeriodEnd, status: 'pending' },
@@ -222,9 +227,8 @@ export class TasksService {
 
   async getChildTasks(tenantId: string, childId: string) {
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const todayStart = this.utcDayStart();
+    const tomorrowStart = new Date(Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth(), todayStart.getUTCDate() + 1));
 
     // Verifica se criança existe e não está em férias
     const child = await this.prisma.child.findFirst({ where: { id: childId, vacationMode: false } });
@@ -272,7 +276,7 @@ export class TasksService {
         const periodEnd =
           last && last.periodEnd > now
             ? last.periodEnd
-            : new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+            : new Date(Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth() + 1, todayStart.getUTCDate()));
 
         const newAssignment = await this.prisma.taskAssignment.create({
           data: { taskId: task.id, childId, periodStart: todayStart, periodEnd, status: 'pending' },
@@ -327,10 +331,17 @@ export class TasksService {
   }
 
   async getHistory(tenantId: string, date?: string, childId?: string) {
-    const day = date ? new Date(date) : new Date();
-    const start = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
+    let start: Date;
+    let end: Date;
+    if (date) {
+      // Parseia "YYYY-MM-DD" explicitamente em UTC — evita problemas de timezone no servidor
+      const [y, m, d] = date.split('-').map(Number);
+      start = new Date(Date.UTC(y, m - 1, d));
+      end = new Date(Date.UTC(y, m - 1, d + 1));
+    } else {
+      start = this.utcDayStart();
+      end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate() + 1));
+    }
 
     return this.prisma.taskAssignment.findMany({
       where: {
