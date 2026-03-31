@@ -185,13 +185,12 @@ export class TasksService {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Só cria se não existe um assignment pendente criado hoje (evita duplicatas no mesmo dia)
+    // Usa periodStart como critério — é definido explicitamente por nós (não depende de createdAt)
     const alreadyToday = await this.prisma.taskAssignment.findFirst({
-      where: { taskId, childId, status: 'pending', createdAt: { gte: todayStart } },
+      where: { taskId, childId, status: 'pending', periodStart: { gte: todayStart } },
     });
     if (alreadyToday) return;
 
-    // Se o periodEnd original já expirou, estende por mais 1 mês
     const newPeriodEnd =
       originalPeriodEnd > now
         ? originalPeriodEnd
@@ -222,6 +221,9 @@ export class TasksService {
   }
 
   async getChildTasks(tenantId: string, childId: string) {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
     const assignments = await this.prisma.taskAssignment.findMany({
       where: {
         childId,
@@ -229,10 +231,11 @@ export class TasksService {
         child: { vacationMode: false },
       },
       include: { task: true, child: true },
-      orderBy: [{ task: { sortOrder: 'asc' } }, { createdAt: 'desc' }],
+      // periodStart DESC: novos ciclos (periodStart=hoje) ficam na frente dos antigos
+      orderBy: [{ task: { sortOrder: 'asc' } }, { periodStart: 'desc' }, { createdAt: 'desc' }],
     });
 
-    // Para cada tarefa, mantém apenas o assignment mais recente
+    // Para cada tarefa, pega o assignment com o periodStart mais recente
     const seen = new Set<string>();
     const latest = assignments.filter((a) => {
       if (seen.has(a.taskId)) return false;
@@ -240,18 +243,20 @@ export class TasksService {
       return true;
     });
 
-    // Fix retroativo: tarefas recorrentes presas em done/approved ganham novo ciclo pendente
+    // Fix retroativo: tarefa recorrente cujo ciclo mais recente é done/approved
+    // E foi concluída ANTES de hoje → cria novo ciclo pendente para hoje
     await Promise.all(
       latest
         .filter(
           (a) =>
             a.task.recurrenceType !== 'one_time' &&
-            (a.status === 'done' || a.status === 'approved'),
+            (a.status === 'done' || a.status === 'approved') &&
+            a.periodStart < todayStart,
         )
         .map((a) => this.ensureNextCycle(a.taskId, a.childId, a.periodEnd)),
     );
 
-    // Rebusca para retornar os assignments atualizados (inclui os novos pendentes)
+    // Rebusca com a nova ordenação — novos pendentes (periodStart=hoje) ficarão na frente
     const refreshed = await this.prisma.taskAssignment.findMany({
       where: {
         childId,
@@ -259,7 +264,7 @@ export class TasksService {
         child: { vacationMode: false },
       },
       include: { task: true, child: true },
-      orderBy: [{ task: { sortOrder: 'asc' } }, { createdAt: 'desc' }],
+      orderBy: [{ task: { sortOrder: 'asc' } }, { periodStart: 'desc' }, { createdAt: 'desc' }],
     });
 
     const seen2 = new Set<string>();
