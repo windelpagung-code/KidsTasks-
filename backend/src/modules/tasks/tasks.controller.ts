@@ -33,6 +33,18 @@ export class TasksController {
     return this.tasksService.getChildTasks(req.user.tenantId, childId);
   }
 
+  @Get('history')
+  @ApiOperation({ summary: 'Histórico de tarefas concluídas por data' })
+  @ApiQuery({ name: 'date', required: false, description: 'Data no formato YYYY-MM-DD. Padrão: hoje.' })
+  @ApiQuery({ name: 'childId', required: false })
+  getHistory(
+    @Req() req,
+    @Query('date') date?: string,
+    @Query('childId') childId?: string,
+  ) {
+    return this.tasksService.getHistory(req.user.tenantId, date, childId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Buscar tarefa' })
   findOne(@Req() req, @Param('id') id: string) {

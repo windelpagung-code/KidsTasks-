@@ -142,7 +142,7 @@ export default function DashboardPage() {
             className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 font-semibold px-4 py-2 rounded-xl text-sm hover:bg-amber-100 transition"
           >
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse-dot" />
-            {pendingApprovals} aprovação{pendingApprovals > 1 ? "ões" : ""} pendente{pendingApprovals > 1 ? "s" : ""}
+            {pendingApprovals} aprova{pendingApprovals > 1 ? "ções" : "ção"} pendente{pendingApprovals > 1 ? "s" : ""}
             <span>→</span>
           </Link>
         )}
@@ -320,9 +320,17 @@ export default function DashboardPage() {
       {data?.children && data.children.length > 1 && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-            <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: "var(--font-jakarta)" }}>
-              🏆 Ranking da família
-            </h2>
+            <div>
+              <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: "var(--font-jakarta)" }}>
+                🏆 Ranking da família
+              </h2>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                {rankingPeriod === "daily" && "Pontos conquistados hoje"}
+                {rankingPeriod === "weekly" && "Pontos nos últimos 7 dias"}
+                {rankingPeriod === "monthly" && "Pontos este mês"}
+                {rankingPeriod === "all" && "Pontos acumulados no total"}
+              </p>
+            </div>
             <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
               {RANKING_PERIODS.map((p) => (
                 <button key={p.value} onClick={() => setRankingPeriod(p.value)}
@@ -334,34 +342,40 @@ export default function DashboardPage() {
           </div>
           {rankingLoading ? (
             <div className="flex justify-center py-6"><div className="text-2xl animate-bounce">🏆</div></div>
-          ) : ranking.length === 0 ? (
-            <p className="text-center text-gray-400 text-sm py-6">Nenhuma tarefa concluída neste período.</p>
-          ) : (
-            <div className="space-y-2">
-              {ranking.map((entry, idx) => {
-                const dataChild = data.children.find((c) => c.id === entry.child.id);
-                const color = AVATAR_COLORS[(data.children.findIndex((c) => c.id === entry.child.id)) % AVATAR_COLORS.length];
-                const medals = ["🥇", "🥈", "🥉"];
-                const pct = dataChild ? xpPercent(dataChild.totalPoints, dataChild.level) : 0;
-                return (
-                  <div key={entry.child.id} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? "bg-amber-50 border border-amber-100" : "bg-gray-50"}`}>
-                    <span className="text-xl w-7 text-center flex-shrink-0">{medals[idx] || `${idx + 1}º`}</span>
-                    <ChildAvatar child={entry.child} colorClass={color} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="font-semibold text-gray-900 text-sm truncate">{entry.child.name}</span>
-                        <span className="text-xs text-violet-600 font-bold whitespace-nowrap">⭐ {entry.periodPoints} pts</span>
+          ) : (() => {
+            const visible = rankingPeriod === "all"
+              ? ranking
+              : ranking.filter((e) => e.periodPoints > 0);
+            if (visible.length === 0) return (
+              <p className="text-center text-gray-400 text-sm py-6">Nenhuma atividade concluída neste período.</p>
+            );
+            return (
+              <div className="space-y-2">
+                {visible.map((entry, idx) => {
+                  const dataChild = data.children.find((c) => c.id === entry.child.id);
+                  const color = AVATAR_COLORS[(data.children.findIndex((c) => c.id === entry.child.id)) % AVATAR_COLORS.length];
+                  const medals = ["🥇", "🥈", "🥉"];
+                  const pct = dataChild ? xpPercent(dataChild.totalPoints, dataChild.level) : 0;
+                  return (
+                    <div key={entry.child.id} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? "bg-amber-50 border border-amber-100" : "bg-gray-50"}`}>
+                      <span className="text-xl w-7 text-center flex-shrink-0">{medals[idx] || `${idx + 1}º`}</span>
+                      <ChildAvatar child={entry.child} colorClass={color} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="font-semibold text-gray-900 text-sm truncate">{entry.child.name}</span>
+                          <span className="text-xs text-violet-600 font-bold whitespace-nowrap">⭐ {entry.periodPoints} pts</span>
+                        </div>
+                        {pct > 0 && <div className="xp-bar"><div className="xp-bar-fill" style={{ width: `${pct}%` }} /></div>}
                       </div>
-                      {pct > 0 && <div className="xp-bar"><div className="xp-bar-fill" style={{ width: `${pct}%` }} /></div>}
+                      <span className="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                        Nv {entry.child.level}
+                      </span>
                     </div>
-                    <span className="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                      Nv {entry.child.level}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 

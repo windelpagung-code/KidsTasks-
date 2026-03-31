@@ -11,6 +11,7 @@ const allNav = [
   { href: "/dashboard/tasks",      label: "Tarefas",        icon: "📋", roles: ["admin", "editor", "viewer"] },
   { href: "/dashboard/children",   label: "Filhos",         icon: "👧", roles: ["admin", "editor", "viewer"] },
   { href: "/dashboard/approvals",  label: "Aprovações",     icon: "✅", roles: ["admin", "editor", "viewer"] },
+  { href: "/dashboard/history",    label: "Histórico",      icon: "📅", roles: ["admin", "editor", "viewer"] },
   { href: "/dashboard/wallet",     label: "Carteira",       icon: "💰", roles: ["admin", "editor", "viewer"] },
   { href: "/dashboard/store",      label: "Loja",           icon: "🛍️", roles: ["admin", "editor", "viewer"] },
   { href: "/dashboard/settings",   label: "Configurações",  icon: "⚙️", roles: ["admin", "editor", "viewer"] },

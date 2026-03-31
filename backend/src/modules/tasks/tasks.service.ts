@@ -305,4 +305,22 @@ export class TasksService {
 
     return { updated: assignments.length };
   }
+
+  async getHistory(tenantId: string, date?: string, childId?: string) {
+    const day = date ? new Date(date) : new Date();
+    const start = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    return this.prisma.taskAssignment.findMany({
+      where: {
+        task: { tenantId, isActive: true },
+        completedAt: { gte: start, lt: end },
+        status: { in: ['done', 'approved'] },
+        ...(childId ? { childId } : {}),
+      },
+      include: { task: true, child: true },
+      orderBy: [{ child: { name: 'asc' } }, { completedAt: 'asc' }],
+    });
+  }
 }
