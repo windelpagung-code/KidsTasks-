@@ -179,31 +179,7 @@ export class TasksService {
       data: { totalPoints: { increment: pointsEarned } },
     });
 
-    // Para tarefas recorrentes, cria próximo ciclo automaticamente
-    if (assignment.task.recurrenceType !== 'one_time') {
-      await this.ensureNextCycle(assignment.taskId, assignment.childId, assignment.periodEnd);
-    }
-
     return { assignment: updated, pointsEarned };
-  }
-
-  private async ensureNextCycle(taskId: string, childId: string, originalPeriodEnd: Date) {
-    const now = new Date();
-    const todayStart = this.utcDayStart();
-
-    const alreadyToday = await this.prisma.taskAssignment.findFirst({
-      where: { taskId, childId, status: 'pending', periodStart: { gte: todayStart } },
-    });
-    if (alreadyToday) return;
-
-    const newPeriodEnd =
-      originalPeriodEnd > now
-        ? originalPeriodEnd
-        : new Date(Date.UTC(todayStart.getUTCFullYear(), todayStart.getUTCMonth() + 1, todayStart.getUTCDate()));
-
-    await this.prisma.taskAssignment.create({
-      data: { taskId, childId, periodStart: todayStart, periodEnd: newPeriodEnd, status: 'pending' },
-    });
   }
 
   async approveTask(tenantId: string, userId: string, assignmentId: string) {
@@ -213,16 +189,11 @@ export class TasksService {
     });
     if (!assignment) throw new NotFoundException('Tarefa não encontrada');
 
-    const result = await this.prisma.taskAssignment.update({
-      where: { id: assignmentId },
-      data: { status: 'approved', approvedBy: userId },
-    });
+    // Se estava pending (sem completedAt), seta agora
+    const data: any = { status: 'approved', approvedBy: userId };
+    if (!assignment.completedAt) data.completedAt = new Date();
 
-    if (assignment.task.recurrenceType !== 'one_time') {
-      await this.ensureNextCycle(assignment.taskId, assignment.childId, assignment.periodEnd);
-    }
-
-    return result;
+    return this.prisma.taskAssignment.update({ where: { id: assignmentId }, data });
   }
 
   async getChildTasks(tenantId: string, childId: string) {
@@ -260,13 +231,18 @@ export class TasksService {
       }
 
       // Tarefas recorrentes: procura um registro de HOJE
-      // "hoje" = done/approved com completedAt hoje OU pending com periodStart hoje
-      const todayRecord = taskAssignments.find((a) => {
-        if (a.status === 'done' || a.status === 'approved') {
-          return a.completedAt && a.completedAt >= todayStart && a.completedAt < tomorrowStart;
-        }
-        return a.status === 'pending' && a.periodStart >= todayStart;
-      });
+      // Prioridade: done/approved com completedAt hoje > pending com periodStart hoje
+      const todayDone = taskAssignments.find(
+        (a) =>
+          (a.status === 'done' || a.status === 'approved') &&
+          a.completedAt &&
+          a.completedAt >= todayStart &&
+          a.completedAt < tomorrowStart,
+      );
+      const todayPending = taskAssignments.find(
+        (a) => a.status === 'pending' && a.periodStart >= todayStart,
+      );
+      const todayRecord = todayDone ?? todayPending;
 
       if (todayRecord) {
         result.push(todayRecord);

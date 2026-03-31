@@ -79,26 +79,32 @@ export class GamificationService {
     let start: Date | null = null;
 
     if (period === 'daily') {
-      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     } else if (period === 'weekly') {
-      start = new Date(now);
-      start.setDate(now.getDate() - 7);
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 6));
     } else if (period === 'monthly') {
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     }
 
     const children = await this.prisma.child.findMany({ where: { tenantId } });
 
     const ranking = await Promise.all(
       children.map(async (child) => {
-        const whereClause: any = {
-          childId: child.id,
-          status: { in: ['done', 'approved'] },
-        };
-        if (start) whereClause.completedAt = { gte: start };
+        // Para "all", usa totalPoints direto (mais eficiente e inclui pontos sem completedAt)
+        if (period === 'all') {
+          return {
+            child: { id: child.id, name: child.name, nickname: child.nickname, avatarUrl: child.avatarUrl, level: child.level },
+            periodPoints: child.totalPoints,
+            totalPoints: child.totalPoints,
+          };
+        }
 
         const earned = await this.prisma.taskAssignment.aggregate({
-          where: whereClause,
+          where: {
+            childId: child.id,
+            status: { in: ['done', 'approved'] },
+            completedAt: { gte: start! },
+          },
           _sum: { pointsEarned: true },
         });
 
