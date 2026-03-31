@@ -223,56 +223,66 @@ export class TasksService {
   async getChildTasks(tenantId: string, childId: string) {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
-    const assignments = await this.prisma.taskAssignment.findMany({
-      where: {
-        childId,
-        task: { tenantId, isActive: true },
-        child: { vacationMode: false },
-      },
+    // Verifica se criança existe e não está em férias
+    const child = await this.prisma.child.findFirst({ where: { id: childId, vacationMode: false } });
+    if (!child) return [];
+
+    // Busca todas as tarefas ativas atribuídas a esta criança
+    const tasks = await this.prisma.task.findMany({
+      where: { tenantId, isActive: true, assignments: { some: { childId } } },
+      orderBy: { sortOrder: 'asc' },
+    });
+    if (tasks.length === 0) return [];
+
+    // Busca todos os assignments de uma vez (evita N+1)
+    const allAssignments = await this.prisma.taskAssignment.findMany({
+      where: { taskId: { in: tasks.map((t) => t.id) }, childId },
       include: { task: true, child: true },
-      // periodStart DESC: novos ciclos (periodStart=hoje) ficam na frente dos antigos
-      orderBy: [{ task: { sortOrder: 'asc' } }, { periodStart: 'desc' }, { createdAt: 'desc' }],
+      orderBy: { createdAt: 'desc' },
     });
 
-    // Para cada tarefa, pega o assignment com o periodStart mais recente
-    const seen = new Set<string>();
-    const latest = assignments.filter((a) => {
-      if (seen.has(a.taskId)) return false;
-      seen.add(a.taskId);
-      return true;
-    });
+    const result: (typeof allAssignments)[number][] = [];
 
-    // Fix retroativo: tarefa recorrente cujo ciclo mais recente é done/approved
-    // E foi concluída ANTES de hoje → cria novo ciclo pendente para hoje
-    await Promise.all(
-      latest
-        .filter(
-          (a) =>
-            a.task.recurrenceType !== 'one_time' &&
-            (a.status === 'done' || a.status === 'approved') &&
-            a.periodStart < todayStart,
-        )
-        .map((a) => this.ensureNextCycle(a.taskId, a.childId, a.periodEnd)),
-    );
+    for (const task of tasks) {
+      const taskAssignments = allAssignments.filter((a) => a.taskId === task.id);
 
-    // Rebusca com a nova ordenação — novos pendentes (periodStart=hoje) ficarão na frente
-    const refreshed = await this.prisma.taskAssignment.findMany({
-      where: {
-        childId,
-        task: { tenantId, isActive: true },
-        child: { vacationMode: false },
-      },
-      include: { task: true, child: true },
-      orderBy: [{ task: { sortOrder: 'asc' } }, { periodStart: 'desc' }, { createdAt: 'desc' }],
-    });
+      if (task.recurrenceType === 'one_time') {
+        // Tarefas únicas: retorna o assignment mais recente
+        if (taskAssignments.length > 0) result.push(taskAssignments[0]);
+        continue;
+      }
 
-    const seen2 = new Set<string>();
-    return refreshed.filter((a) => {
-      if (seen2.has(a.taskId)) return false;
-      seen2.add(a.taskId);
-      return true;
-    });
+      // Tarefas recorrentes: procura um registro de HOJE
+      // "hoje" = done/approved com completedAt hoje OU pending com periodStart hoje
+      const todayRecord = taskAssignments.find((a) => {
+        if (a.status === 'done' || a.status === 'approved') {
+          return a.completedAt && a.completedAt >= todayStart && a.completedAt < tomorrowStart;
+        }
+        return a.status === 'pending' && a.periodStart >= todayStart;
+      });
+
+      if (todayRecord) {
+        result.push(todayRecord);
+      } else {
+        // Nenhum registro de hoje → cria novo ciclo pendente
+        const last = taskAssignments[0];
+        const periodEnd =
+          last && last.periodEnd > now
+            ? last.periodEnd
+            : new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+
+        const newAssignment = await this.prisma.taskAssignment.create({
+          data: { taskId: task.id, childId, periodStart: todayStart, periodEnd, status: 'pending' },
+          include: { task: true, child: true },
+        });
+        result.push(newAssignment);
+      }
+    }
+
+    return result;
   }
 
   async reorder(tenantId: string, ids: string[]) {
