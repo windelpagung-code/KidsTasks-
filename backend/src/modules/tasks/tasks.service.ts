@@ -181,19 +181,24 @@ export class TasksService {
     return { assignment: updated, pointsEarned };
   }
 
-  private async ensureNextCycle(taskId: string, childId: string, periodEnd: Date) {
+  private async ensureNextCycle(taskId: string, childId: string, originalPeriodEnd: Date) {
     const now = new Date();
-    if (periodEnd <= now) return; // período expirado, não cria novo ciclo
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const alreadyPending = await this.prisma.taskAssignment.findFirst({
-      where: { taskId, childId, status: 'pending' },
+    // Só cria se não existe um assignment pendente criado hoje (evita duplicatas no mesmo dia)
+    const alreadyToday = await this.prisma.taskAssignment.findFirst({
+      where: { taskId, childId, status: 'pending', createdAt: { gte: todayStart } },
     });
-    if (alreadyPending) return;
+    if (alreadyToday) return;
 
-    const nextStart = new Date(now);
-    nextStart.setHours(0, 0, 0, 0); // início de hoje
+    // Se o periodEnd original já expirou, estende por mais 1 mês
+    const newPeriodEnd =
+      originalPeriodEnd > now
+        ? originalPeriodEnd
+        : new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+
     await this.prisma.taskAssignment.create({
-      data: { taskId, childId, periodStart: nextStart, periodEnd, status: 'pending' },
+      data: { taskId, childId, periodStart: todayStart, periodEnd: newPeriodEnd, status: 'pending' },
     });
   }
 
