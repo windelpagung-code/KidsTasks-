@@ -173,7 +173,28 @@ export class TasksService {
       data: { totalPoints: { increment: pointsEarned } },
     });
 
+    // Para tarefas recorrentes, cria próximo ciclo automaticamente
+    if (assignment.task.recurrenceType !== 'one_time') {
+      await this.ensureNextCycle(assignment.taskId, assignment.childId, assignment.periodEnd);
+    }
+
     return { assignment: updated, pointsEarned };
+  }
+
+  private async ensureNextCycle(taskId: string, childId: string, periodEnd: Date) {
+    const now = new Date();
+    if (periodEnd <= now) return; // período expirado, não cria novo ciclo
+
+    const alreadyPending = await this.prisma.taskAssignment.findFirst({
+      where: { taskId, childId, status: 'pending' },
+    });
+    if (alreadyPending) return;
+
+    const nextStart = new Date(now);
+    nextStart.setHours(0, 0, 0, 0); // início de hoje
+    await this.prisma.taskAssignment.create({
+      data: { taskId, childId, periodStart: nextStart, periodEnd, status: 'pending' },
+    });
   }
 
   async approveTask(tenantId: string, userId: string, assignmentId: string) {
@@ -188,34 +209,8 @@ export class TasksService {
       data: { status: 'approved', approvedBy: userId },
     });
 
-    // Para tarefas recorrentes, cria novo assignment pendente para o próximo ciclo
     if (assignment.task.recurrenceType !== 'one_time') {
-      const now = new Date();
-      const nextStart = new Date(now);
-      nextStart.setDate(nextStart.getDate() + 1);
-      nextStart.setHours(0, 0, 0, 0);
-
-      if (nextStart < assignment.periodEnd) {
-        const alreadyPending = await this.prisma.taskAssignment.findFirst({
-          where: {
-            taskId: assignment.taskId,
-            childId: assignment.childId,
-            status: 'pending',
-          },
-        });
-
-        if (!alreadyPending) {
-          await this.prisma.taskAssignment.create({
-            data: {
-              taskId: assignment.taskId,
-              childId: assignment.childId,
-              periodStart: nextStart,
-              periodEnd: assignment.periodEnd,
-              status: 'pending',
-            },
-          });
-        }
-      }
+      await this.ensureNextCycle(assignment.taskId, assignment.childId, assignment.periodEnd);
     }
 
     return result;
@@ -232,12 +227,40 @@ export class TasksService {
       orderBy: [{ task: { sortOrder: 'asc' } }, { createdAt: 'desc' }],
     });
 
-    // Para cada tarefa, retorna apenas o assignment mais recente
-    // Isso garante que tarefas recorrentes mostrem sempre o ciclo atual
+    // Para cada tarefa, mantém apenas o assignment mais recente
     const seen = new Set<string>();
-    return assignments.filter((a) => {
+    const latest = assignments.filter((a) => {
       if (seen.has(a.taskId)) return false;
       seen.add(a.taskId);
+      return true;
+    });
+
+    // Fix retroativo: tarefas recorrentes presas em done/approved ganham novo ciclo pendente
+    await Promise.all(
+      latest
+        .filter(
+          (a) =>
+            a.task.recurrenceType !== 'one_time' &&
+            (a.status === 'done' || a.status === 'approved'),
+        )
+        .map((a) => this.ensureNextCycle(a.taskId, a.childId, a.periodEnd)),
+    );
+
+    // Rebusca para retornar os assignments atualizados (inclui os novos pendentes)
+    const refreshed = await this.prisma.taskAssignment.findMany({
+      where: {
+        childId,
+        task: { tenantId, isActive: true },
+        child: { vacationMode: false },
+      },
+      include: { task: true, child: true },
+      orderBy: [{ task: { sortOrder: 'asc' } }, { createdAt: 'desc' }],
+    });
+
+    const seen2 = new Set<string>();
+    return refreshed.filter((a) => {
+      if (seen2.has(a.taskId)) return false;
+      seen2.add(a.taskId);
       return true;
     });
   }
