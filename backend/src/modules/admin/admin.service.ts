@@ -360,6 +360,32 @@ export class AdminService {
     };
   }
 
+  async recalcLevels() {
+    const LEVELS = [
+      { level: 1, minPoints: 0,    maxPoints: 199 },
+      { level: 2, minPoints: 200,  maxPoints: 499 },
+      { level: 3, minPoints: 500,  maxPoints: 999 },
+      { level: 4, minPoints: 1000, maxPoints: 2499 },
+      { level: 5, minPoints: 2500, maxPoints: Infinity },
+    ];
+
+    const children = await this.prisma.child.findMany({ select: { id: true, totalPoints: true, level: true } });
+    let updated = 0;
+
+    for (const child of children) {
+      const correctLevel = LEVELS.find(
+        (l) => child.totalPoints >= l.minPoints && child.totalPoints <= l.maxPoints,
+      )?.level ?? 1;
+
+      if (correctLevel !== child.level) {
+        await this.prisma.child.update({ where: { id: child.id }, data: { level: correctLevel } });
+        updated++;
+      }
+    }
+
+    return { total: children.length, updated };
+  }
+
   async suspendTenant(id: string) {
     return this.prisma.tenant.update({ where: { id }, data: { status: 'suspended' } });
   }

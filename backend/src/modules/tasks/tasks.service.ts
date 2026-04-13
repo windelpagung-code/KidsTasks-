@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { GamificationService } from '../gamification/gamification.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { CompleteTaskDto } from './dto/complete-task.dto';
@@ -7,7 +8,10 @@ import { Difficulty, RecurrenceType } from '@prisma/client';
 
 @Injectable()
 export class TasksService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private gamification: GamificationService,
+  ) {}
 
   private getPointMultiplier(difficulty: Difficulty): number {
     const multipliers = { easy: 1, medium: 1.5, hard: 2 };
@@ -179,7 +183,10 @@ export class TasksService {
       data: { totalPoints: { increment: pointsEarned } },
     });
 
-    return { assignment: updated, pointsEarned };
+    // Atualiza nível e badges após ganhar pontos
+    const gamification = await this.gamification.checkAndAwardBadges(assignment.childId);
+
+    return { assignment: updated, pointsEarned, ...gamification };
   }
 
   async approveTask(tenantId: string, userId: string, assignmentId: string) {
@@ -189,11 +196,25 @@ export class TasksService {
     });
     if (!assignment) throw new NotFoundException('Tarefa não encontrada');
 
-    // Se estava pending (sem completedAt), seta agora
+    // Se estava pending (aprovação direta sem o filho ter marcado), concede pontos agora
     const data: any = { status: 'approved', approvedBy: userId };
-    if (!assignment.completedAt) data.completedAt = new Date();
+    if (!assignment.completedAt) {
+      data.completedAt = new Date();
+      const multiplier = this.getPointMultiplier(assignment.task.difficulty);
+      const pointsEarned = Math.floor(assignment.task.basePoints * multiplier);
+      data.pointsEarned = pointsEarned;
+      await this.prisma.child.update({
+        where: { id: assignment.childId },
+        data: { totalPoints: { increment: pointsEarned } },
+      });
+    }
 
-    return this.prisma.taskAssignment.update({ where: { id: assignmentId }, data });
+    const updated = await this.prisma.taskAssignment.update({ where: { id: assignmentId }, data });
+
+    // Atualiza nível e badges
+    await this.gamification.checkAndAwardBadges(assignment.childId);
+
+    return updated;
   }
 
   async getChildTasks(tenantId: string, childId: string) {
@@ -329,6 +350,10 @@ export class TasksService {
         });
       }
     }
+
+    // Atualiza nível e badges para cada criança afetada
+    const affectedChildIds = [...new Set(assignments.map((a) => a.childId))];
+    await Promise.all(affectedChildIds.map((id) => this.gamification.checkAndAwardBadges(id)));
 
     return { updated: assignments.length };
   }

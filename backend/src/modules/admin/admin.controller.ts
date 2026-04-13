@@ -47,6 +47,10 @@ export class AdminController {
   @ApiOperation({ summary: 'Dados para suporte' })
   getSuporte() { return this.adminService.getSuporte(); }
 
+  @Put('recalc-levels')
+  @ApiOperation({ summary: 'Recalcular nível de todas as crianças' })
+  recalcLevels() { return this.adminService.recalcLevels(); }
+
   @Put('tenants/:id/suspend')
   @ApiOperation({ summary: 'Suspender família' })
   suspend(@Param('id') id: string) { return this.adminService.suspendTenant(id); }
