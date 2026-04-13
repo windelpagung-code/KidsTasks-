@@ -183,9 +183,13 @@ export default function TasksPrintPage() {
       {/* Document */}
       <div className="doc">
         <div className="doc-header">
-          <div>
-            <h1>{title}</h1>
-            <p>{today}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="KidsTasks" style={{ width: 34, height: 34, borderRadius: 7 }} />
+            <div>
+              <h1>{title}</h1>
+              <p>{today}</p>
+            </div>
           </div>
           <span className="tag-count">{filteredTasks.length} tarefa{filteredTasks.length !== 1 ? "s" : ""}</span>
         </div>

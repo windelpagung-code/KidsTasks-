@@ -239,14 +239,29 @@ export class TasksService {
           a.completedAt >= todayStart &&
           a.completedAt < tomorrowStart,
       );
+      // Limita pendentes ao dia de hoje (periodStart entre todayStart e tomorrowStart)
       const todayPending = taskAssignments.find(
-        (a) => a.status === 'pending' && a.periodStart >= todayStart,
+        (a) =>
+          a.status === 'pending' &&
+          a.periodStart >= todayStart &&
+          a.periodStart < tomorrowStart,
       );
       const todayRecord = todayDone ?? todayPending;
 
       if (todayRecord) {
         result.push(todayRecord);
       } else {
+        // Marca pendentes de dias anteriores como not_done (limpeza de stale)
+        const stalePending = taskAssignments.filter(
+          (a) => a.status === 'pending' && a.periodStart < todayStart,
+        );
+        if (stalePending.length > 0) {
+          await this.prisma.taskAssignment.updateMany({
+            where: { id: { in: stalePending.map((a) => a.id) } },
+            data: { status: 'not_done' },
+          });
+        }
+
         // Nenhum registro de hoje → cria novo ciclo pendente
         const last = taskAssignments[0];
         const periodEnd =
@@ -277,7 +292,7 @@ export class TasksService {
     return { reordered: ids.length };
   }
 
-  async bulkComplete(tenantId: string, userId: string, assignmentIds: string[], done: boolean) {
+  async bulkComplete(tenantId: string, userId: string, assignmentIds: string[], done: boolean, penalize = false) {
     const assignments = await this.prisma.taskAssignment.findMany({
       where: { id: { in: assignmentIds }, task: { tenantId } },
       include: { task: true },
@@ -294,6 +309,18 @@ export class TasksService {
         await this.prisma.child.update({
           where: { id: a.childId },
           data: { totalPoints: { increment: pointsEarned } },
+        });
+      } else if (penalize) {
+        // Marcar como não feita com penalidade: debita os pontos da tarefa do saldo
+        const multiplier = this.getPointMultiplier(a.task.difficulty);
+        const penaltyPoints = Math.floor(a.task.basePoints * multiplier);
+        await this.prisma.taskAssignment.update({
+          where: { id: a.id },
+          data: { status: 'not_done', pointsEarned: -penaltyPoints, completedAt: new Date() },
+        });
+        await this.prisma.child.update({
+          where: { id: a.childId },
+          data: { totalPoints: { decrement: penaltyPoints } },
         });
       } else {
         await this.prisma.taskAssignment.update({

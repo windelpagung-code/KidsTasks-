@@ -84,9 +84,12 @@ export default function WalletPage() {
   const [convertForm, setConvertForm] = useState(emptyConvertForm);
   const [converting, setConverting] = useState(false);
   const [convertError, setConvertError] = useState("");
+  const [confirmModal, setConfirmModal] = useState<{ msg: string; onConfirm: () => Promise<void> } | null>(null);
+  const [confirmRunning, setConfirmRunning] = useState(false);
   const [preset, setPreset] = useState<Preset>("thisMonth");
   const [dateFrom, setDateFrom] = useState(PRESETS.thisMonth.from);
   const [dateTo, setDateTo] = useState(PRESETS.thisMonth.to);
+  const [showDateFilter, setShowDateFilter] = useState(false);
 
   useEffect(() => {
     api.get("/children").then((r) => {
@@ -261,17 +264,21 @@ export default function WalletPage() {
     }
   }
 
-  async function handleDeleteTx(txId: string) {
-    if (!confirm("Excluir este lançamento?")) return;
-    setDeleting(txId);
-    try {
-      await api.delete(`/wallet/${selected}/transactions/${txId}`);
-      loadWallet();
-    } catch {
-      alert("Erro ao excluir lançamento");
-    } finally {
-      setDeleting(null);
-    }
+  function handleDeleteTx(txId: string) {
+    setConfirmModal({
+      msg: "Excluir este lançamento?",
+      onConfirm: async () => {
+        setDeleting(txId);
+        try {
+          await api.delete(`/wallet/${selected}/transactions/${txId}`);
+          loadWallet();
+        } catch {
+          setError("Erro ao excluir lançamento");
+        } finally {
+          setDeleting(null);
+        }
+      },
+    });
   }
 
   async function handleSavingsOp(e: React.FormEvent) {
@@ -312,6 +319,36 @@ export default function WalletPage() {
     }
   }
 
+  const [redeeming, setRedeeming] = useState(false);
+
+  function handleRedeemGoal() {
+    if (!savingsAccount?.goalAmount) return;
+    const amount = Number(savingsAccount.goalAmount);
+    const name = savingsAccount.goalName || "meta";
+    setConfirmModal({
+      msg: `Marcar meta "${name}" como concluída? R$ ${amount.toFixed(2)} serão debitados da poupança.`,
+      onConfirm: async () => {
+        setRedeeming(true);
+        setSavingsError("");
+        try {
+          await api.post(`/savings/${selected}/redeem-goal`);
+          loadSavings();
+        } catch (err: unknown) {
+          const e = err as { response?: { data?: { message?: string | string[] } } };
+          const msg = e.response?.data?.message;
+          setSavingsError(Array.isArray(msg) ? msg[0] : msg || "Erro ao resgatar");
+        } finally {
+          setRedeeming(false);
+        }
+      },
+    });
+  }
+
+  function openNewGoal() {
+    setGoalForm({ goalName: "", goalAmount: "" });
+    setShowGoalForm(true);
+  }
+
   async function handleEditSavingsTx(e: React.FormEvent) {
     e.preventDefault();
     setEditSavingsSaving(true);
@@ -322,14 +359,18 @@ export default function WalletPage() {
     } catch { /* ignore */ } finally { setEditSavingsSaving(false); }
   }
 
-  async function handleDeleteSavingsTx(txId: string) {
-    if (!confirm("Excluir este lançamento? O saldo da poupança e da carteira serão ajustados automaticamente.")) return;
-    setDeletingSavingsTx(txId);
-    try {
-      await api.delete(`/savings/${selected}/transactions/${txId}`);
-      loadSavings();
-      loadWallet();
-    } catch { /* ignore */ } finally { setDeletingSavingsTx(null); }
+  function handleDeleteSavingsTx(txId: string) {
+    setConfirmModal({
+      msg: "Excluir este lançamento? O saldo da poupança e da carteira serão ajustados automaticamente.",
+      onConfirm: async () => {
+        setDeletingSavingsTx(txId);
+        try {
+          await api.delete(`/savings/${selected}/transactions/${txId}`);
+          loadSavings();
+          loadWallet();
+        } catch { /* ignore */ } finally { setDeletingSavingsTx(null); }
+      },
+    });
   }
 
   async function handleConvertPoints(e: React.FormEvent) {
@@ -362,7 +403,7 @@ export default function WalletPage() {
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string | string[] } } };
       const msg = e.response?.data?.message;
-      alert(Array.isArray(msg) ? msg[0] : msg || "Erro ao registrar mesada");
+      setError(Array.isArray(msg) ? msg[0] : msg || "Erro ao registrar mesada");
     } finally {
       setPayingAllowance(false);
     }
@@ -375,23 +416,25 @@ export default function WalletPage() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Carteira 💰</h1>
-          <p className="text-gray-500 text-sm mt-1">Créditos, débitos e saldo dos filhos</p>
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Carteira 💰</h1>
+            <p className="text-gray-500 text-sm mt-1">Créditos, débitos e saldo dos filhos</p>
+          </div>
         </div>
         {selected && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-3 flex-wrap">
             <button onClick={handlePayAllowance} disabled={payingAllowance}
-              className="bg-green-600 text-white px-3 py-2 rounded-xl font-semibold hover:bg-green-700 transition text-sm disabled:opacity-50">
+              className="flex-1 sm:flex-none bg-green-600 text-white px-3 py-2 rounded-xl font-semibold hover:bg-green-700 transition text-sm disabled:opacity-50 whitespace-nowrap">
               {payingAllowance ? "..." : "💸 Pagar mesada"}
             </button>
             <button onClick={() => { setShowConvertForm(!showConvertForm); setConvertError(""); }}
-              className="bg-amber-500 text-white px-3 py-2 rounded-xl font-semibold hover:bg-amber-600 transition text-sm">
+              className="flex-1 sm:flex-none bg-amber-500 text-white px-3 py-2 rounded-xl font-semibold hover:bg-amber-600 transition text-sm whitespace-nowrap">
               ⭐ Converter pontos
             </button>
             <button onClick={() => { setShowForm(!showForm); setError(""); }}
-              className="bg-purple-600 text-white px-3 py-2 rounded-xl font-semibold hover:bg-purple-700 transition text-sm">
+              className="flex-1 sm:flex-none bg-purple-600 text-white px-3 py-2 rounded-xl font-semibold hover:bg-purple-700 transition text-sm whitespace-nowrap">
               + Lançamento
             </button>
           </div>
@@ -427,59 +470,112 @@ export default function WalletPage() {
           </div>
 
           {/* ── SAVINGS TAB ── */}
-          {tab === "savings" && savingsAccount !== null && (
-            <div>
-              {/* Savings balance card */}
-              <div className="bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl p-6 text-white mb-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-white/70 text-sm mb-1">Saldo na poupança</p>
-                    <p className="text-4xl font-bold">R$ {Number(savingsAccount.balance).toFixed(2)}</p>
-                    <p className="text-white/70 text-sm mt-2">💰 Carteira disponível: R$ {savingsWalletBalance.toFixed(2)}</p>
-                  </div>
-                  <button onClick={() => { setShowGoalForm(!showGoalForm); setGoalForm({ goalName: savingsAccount.goalName || "", goalAmount: savingsAccount.goalAmount ? String(savingsAccount.goalAmount) : "" }); }}
-                    className="bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
-                    🎯 Meta
-                  </button>
-                </div>
+          {tab === "savings" && savingsAccount !== null && (() => {
+            const balance = Number(savingsAccount.balance);
+            const goalAmt = Number(savingsAccount.goalAmount) || 0;
+            const goalReached = !!savingsAccount.goalName && goalAmt > 0 && balance >= goalAmt;
+            const goalPct = goalAmt > 0 ? Math.min(100, (balance / goalAmt) * 100) : 0;
 
-                {/* Goal progress */}
-                {savingsAccount.goalName && savingsAccount.goalAmount && (
-                  <div className="mt-4">
-                    <div className="flex justify-between text-sm text-white/80 mb-1.5">
-                      <span>🎯 {savingsAccount.goalName}</span>
-                      <span>R$ {Number(savingsAccount.balance).toFixed(2)} / R$ {Number(savingsAccount.goalAmount).toFixed(2)}</span>
+            return (
+            <div>
+              {/* ── GOAL REACHED celebration ── */}
+              {goalReached ? (
+                <div className="relative overflow-hidden rounded-2xl mb-6 border border-amber-300 bg-gradient-to-br from-amber-50 via-yellow-50 to-emerald-50 p-6">
+                  <div className="absolute top-0 right-0 text-[80px] opacity-10 leading-none select-none">🏆</div>
+                  <div className="relative">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-2xl">🎉</span>
+                      <h3 className="text-lg font-extrabold text-amber-800">Meta concluída!</h3>
                     </div>
-                    <div className="w-full bg-white/20 rounded-full h-3">
-                      <div className="bg-white rounded-full h-3 transition-all"
-                        style={{ width: `${Math.min(100, (Number(savingsAccount.balance) / Number(savingsAccount.goalAmount)) * 100).toFixed(1)}%` }} />
+                    <p className="text-amber-700 font-semibold text-sm mb-0.5">🎯 {savingsAccount.goalName}</p>
+                    <p className="text-emerald-700 text-2xl font-bold mb-4">R$ {balance.toFixed(2)} guardados</p>
+
+                    {savingsError && (
+                      <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg px-4 py-2 mb-3 text-sm">{savingsError}</div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={handleRedeemGoal}
+                        disabled={redeeming}
+                        className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition disabled:opacity-50 text-sm"
+                      >
+                        {redeeming ? "Processando..." : `✅ Concluir meta`}
+                      </button>
+                      <button
+                        onClick={openNewGoal}
+                        className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-amber-300 hover:border-amber-400 text-amber-800 font-bold py-3 px-4 rounded-xl transition text-sm"
+                      >
+                        🎯 Definir nova meta
+                      </button>
                     </div>
-                    <p className="text-white/70 text-xs mt-1">
-                      {Math.min(100, (Number(savingsAccount.balance) / Number(savingsAccount.goalAmount)) * 100).toFixed(0)}% da meta atingida
+
+                    <p className="text-amber-600 text-xs mt-3 text-center">
+                      Concluir marca a meta como alcançada e debita o valor da poupança
                     </p>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                /* ── Normal balance card ── */
+                <div className="bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl p-6 text-white mb-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-white/70 text-sm mb-1">Saldo na poupança</p>
+                      <p className="text-4xl font-bold">R$ {balance.toFixed(2)}</p>
+                      <p className="text-white/70 text-sm mt-2">💰 Carteira disponível: R$ {savingsWalletBalance.toFixed(2)}</p>
+                    </div>
+                    <button
+                      onClick={() => { setShowGoalForm(!showGoalForm); setGoalForm({ goalName: savingsAccount.goalName || "", goalAmount: savingsAccount.goalAmount ? String(savingsAccount.goalAmount) : "" }); }}
+                      className="bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition"
+                    >
+                      🎯 Meta
+                    </button>
+                  </div>
+
+                  {/* Goal progress */}
+                  {savingsAccount.goalName && goalAmt > 0 && (
+                    <div className="mt-4">
+                      <div className="flex justify-between text-sm text-white/80 mb-1.5">
+                        <span>🎯 {savingsAccount.goalName}</span>
+                        <span>R$ {balance.toFixed(2)} / R$ {goalAmt.toFixed(2)}</span>
+                      </div>
+                      <div className="w-full bg-white/20 rounded-full h-3">
+                        <div className="bg-white rounded-full h-3 transition-all" style={{ width: `${goalPct.toFixed(1)}%` }} />
+                      </div>
+                      <p className="text-white/70 text-xs mt-1">{goalPct.toFixed(0)}% da meta atingida · faltam R$ {Math.max(0, goalAmt - balance).toFixed(2)}</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Goal form */}
               {showGoalForm && (
                 <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6">
-                  <h3 className="font-bold text-gray-800 mb-3">Definir meta de poupança</h3>
+                  <h3 className="font-bold text-gray-800 mb-3">
+                    {goalReached ? "🎯 Definir nova meta" : "Definir meta de poupança"}
+                  </h3>
                   <form onSubmit={handleSaveGoal} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-medium text-gray-500 mb-1">Nome da meta</label>
                       <input value={goalForm.goalName} onChange={(e) => setGoalForm({ ...goalForm, goalName: e.target.value })}
-                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Nova bicicleta, tênis, videogame..." />
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="Nova bicicleta, tênis, videogame..." />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Valor alvo (R$)</label>
-                      <input type="number" min="1" step="0.01" value={goalForm.goalAmount} onChange={(e) => setGoalForm({ ...goalForm, goalAmount: e.target.value })}
-                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="200.00" />
+                      <input type="number" min="1" step="0.01" value={goalForm.goalAmount}
+                        onChange={(e) => setGoalForm({ ...goalForm, goalAmount: e.target.value })}
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="200.00" />
                     </div>
                     <div className="flex gap-2 items-end">
-                      <button type="button" onClick={() => setShowGoalForm(false)} className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-600 text-sm hover:bg-gray-50 transition">Cancelar</button>
-                      <button type="submit" disabled={savingGoal} className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition disabled:opacity-50">
-                        {savingGoal ? "..." : "Salvar"}
+                      <button type="button" onClick={() => setShowGoalForm(false)}
+                        className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-600 text-sm hover:bg-gray-50 transition">
+                        Cancelar
+                      </button>
+                      <button type="submit" disabled={savingGoal}
+                        className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition disabled:opacity-50">
+                        {savingGoal ? "..." : "Salvar meta"}
                       </button>
                     </div>
                   </form>
@@ -579,7 +675,8 @@ export default function WalletPage() {
                 )}
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* ── WALLET TAB ── */}
           {tab === "wallet" && (
@@ -677,27 +774,33 @@ export default function WalletPage() {
 
               {/* Date filters */}
               <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6">
-                <div className="flex flex-wrap gap-2 mb-3">
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                   {(Object.keys(PRESETS) as Preset[]).map((p) => (
-                    <button key={p} onClick={() => applyPreset(p)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${preset === p ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    <button key={p} onClick={() => { applyPreset(p); setShowDateFilter(false); }}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${preset === p ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
                       {PRESETS[p].label}
                     </button>
                   ))}
+                  <button onClick={() => setShowDateFilter(!showDateFilter)}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${showDateFilter ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    📅 Período
+                  </button>
                 </div>
-                <div className="flex flex-wrap gap-3 items-center">
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs font-medium text-gray-500">De</label>
-                    <input type="date" value={dateFrom} onChange={(e) => handleDateChange("from", e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                {showDateFilter && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-3 items-center">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-gray-500">De</label>
+                      <input type="date" value={dateFrom} onChange={(e) => handleDateChange("from", e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-gray-500">até</label>
+                      <input type="date" value={dateTo} onChange={(e) => handleDateChange("to", e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs font-medium text-gray-500">até</label>
-                    <input type="date" value={dateTo} onChange={(e) => handleDateChange("to", e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
-                  </div>
-                  <span className="text-xs text-gray-400">{filtered.length} transaç{filtered.length !== 1 ? "ões" : "ão"}</span>
-                </div>
+                )}
+                <p className="text-xs text-gray-400 mt-2">{filtered.length} transaç{filtered.length !== 1 ? "ões" : "ão"}</p>
               </div>
 
               {/* Filtered stats */}
@@ -837,6 +940,36 @@ export default function WalletPage() {
           </> // end wallet tab
           )}
         </>
+      )}
+
+      {/* In-app confirm modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <p className="text-gray-800 text-sm font-medium leading-relaxed mb-6">{confirmModal.msg}</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmModal(null)}
+                disabled={confirmRunning}
+                className="px-4 py-2 rounded-xl border border-gray-300 text-gray-600 text-sm hover:bg-gray-50 transition disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  setConfirmRunning(true);
+                  await confirmModal.onConfirm();
+                  setConfirmRunning(false);
+                  setConfirmModal(null);
+                }}
+                disabled={confirmRunning}
+                className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition disabled:opacity-50"
+              >
+                {confirmRunning ? "..." : "Confirmar"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -312,48 +312,40 @@ export default function TasksPage() {
                         {task.icon || "📋"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-900 text-sm" style={{ fontFamily: "var(--font-jakarta)" }}>
+                        <div className="font-semibold text-gray-900 text-sm truncate" style={{ fontFamily: "var(--font-jakarta)" }}>
                           {task.title}
                         </div>
-                        {task.description && (
-                          <div className="text-gray-400 text-xs mt-0.5 truncate">{task.description}</div>
-                        )}
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${diff.bg} ${diff.color}`}>
-                            {diff.label}
-                          </span>
-                          <span className="text-xs text-violet-600 bg-violet-50 border border-violet-100 px-2 py-0.5 rounded-full font-medium">
-                            ⭐ {task.basePoints} pts
-                          </span>
-                          <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">
-                            🔄 {recurrenceLabels[task.recurrenceType]}
-                          </span>
-                          {task.category && (
-                            <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{task.category}</span>
-                          )}
+                        <div className="text-xs text-gray-500 mt-0.5 truncate">
+                          <span className={diff.color}>{diff.label}</span>
+                          {" · "}⭐{task.basePoints}pts
+                          {" · "}{recurrenceLabels[task.recurrenceType]}
+                          {task.category && <> · {task.category}</>}
                         </div>
                         {task.assignments && task.assignments.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            {task.assignments.map((a) => (
-                              <span key={a.id} className="text-xs bg-violet-50 text-violet-600 border border-violet-100 px-2 py-0.5 rounded-full">
-                                {a.child?.name}
-                              </span>
-                            ))}
+                          <div className="text-xs text-violet-500 mt-0.5 truncate">
+                            {Array.from(new Map(task.assignments.map((a) => [a.childId, a])).values())
+                              .map((a) => a.child?.name)
+                              .join(", ")}
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
+                      <div className="flex items-center gap-0.5 flex-shrink-0">
                         <button onClick={() => openEdit(task)}
-                          className="text-xs text-violet-600 hover:text-violet-800 font-semibold px-3 py-1.5 rounded-lg hover:bg-violet-50 transition">
-                          Editar
+                          className="text-violet-600 hover:text-violet-800 font-semibold p-2 rounded-lg hover:bg-violet-50 transition"
+                          title="Editar">
+                          <span className="hidden sm:inline text-xs">Editar</span>
+                          <span className="sm:hidden text-base leading-none">✏️</span>
                         </button>
                         <button onClick={() => handleToggle(task)}
-                          className="text-xs text-amber-600 hover:bg-amber-50 font-medium px-3 py-1.5 rounded-lg transition">
-                          Pausar
+                          className="text-amber-600 hover:bg-amber-50 font-medium p-2 rounded-lg transition"
+                          title="Pausar">
+                          <span className="hidden sm:inline text-xs">Pausar</span>
+                          <span className="sm:hidden text-base leading-none">⏸️</span>
                         </button>
                         <button onClick={() => handleDelete(task.id)}
-                          className="text-xs text-red-400 hover:text-red-600 px-2 py-1.5 rounded-lg hover:bg-red-50 transition">
-                          ✕
+                          className="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition"
+                          title="Remover">
+                          <span className="text-xs">✕</span>
                         </button>
                       </div>
                     </div>

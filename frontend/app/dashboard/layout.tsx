@@ -111,7 +111,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </aside>
 
         {/* ── Main content ────────────────────────────────────── */}
-        <main className="flex-1 overflow-y-auto p-6 pb-24 md:pb-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 pb-24 md:pb-6">
           {suspended && pathname !== "/dashboard/billing" && (
             <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
               <span className="text-xl">⚠️</span>
@@ -131,22 +131,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* ── Mobile bottom nav ───────────────────────────────── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg z-40">
-        <div className="flex overflow-x-auto no-scrollbar py-1 px-1">
-          {nav.map((item) => {
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex flex-col items-center gap-0.5 flex-shrink-0 px-3 py-1.5 rounded-xl transition-all text-center min-w-[60px] ${
-                  active ? "text-violet-600" : "text-gray-400"
-                }`}
-              >
-                <span className={`text-xl transition-transform ${active ? "scale-110" : ""}`}>{item.icon}</span>
-                <span className="text-[9px] font-semibold leading-tight">{item.label}</span>
-              </Link>
-            );
-          })}
+        <div className="relative">
+          <div className="flex overflow-x-auto no-scrollbar py-1 px-1">
+            {nav.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex flex-col items-center gap-0.5 flex-shrink-0 px-3 py-1.5 rounded-xl transition-all text-center min-w-[60px] ${
+                    active ? "text-violet-600" : "text-gray-400"
+                  }`}
+                >
+                  <span className={`text-xl transition-transform ${active ? "scale-110" : ""}`}>{item.icon}</span>
+                  <span className="text-[9px] font-semibold leading-tight">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+          {/* Fade indicator — more items to the right */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white to-transparent" />
         </div>
       </nav>
     </div>

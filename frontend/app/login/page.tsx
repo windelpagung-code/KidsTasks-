@@ -1,6 +1,7 @@
 "use client";
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import api, { saveTokens } from "@/lib/api";
 
@@ -61,8 +62,8 @@ function LoginForm() {
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 glass rounded-xl flex items-center justify-center">
-            <span className="text-xl">🎯</span>
+          <div className="w-10 h-10 glass rounded-xl flex items-center justify-center overflow-hidden">
+            <Image src="/logo.png" alt="KidsTasks" width={40} height={40} className="rounded-xl" />
           </div>
           <span className="text-white font-bold text-xl tracking-tight" style={{ fontFamily: "var(--font-jakarta)" }}>
             KidsTasks
@@ -151,7 +152,7 @@ function LoginForm() {
 
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-2 mb-10">
-          <span className="text-2xl">🎯</span>
+          <Image src="/logo.png" alt="KidsTasks" width={36} height={36} className="rounded-lg" />
           <span className="font-bold text-xl text-gray-900" style={{ fontFamily: "var(--font-jakarta)" }}>
             KidsTasks
           </span>

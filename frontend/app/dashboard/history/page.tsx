@@ -27,7 +27,10 @@ const AVATAR_COLORS = [
 ];
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  // Usa a data local do navegador (não UTC) para evitar que à noite no fuso
+  // horário do usuário o histórico aponte para o dia seguinte em UTC
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function formatDate(iso: string) {

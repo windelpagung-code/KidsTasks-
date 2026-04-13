@@ -78,7 +78,7 @@ export class TasksController {
   @Post('bulk-complete')
   @ApiOperation({ summary: 'Marcar em lote (para lista impressa)' })
   bulkComplete(@Req() req, @Body() dto: BulkCompleteDto) {
-    return this.tasksService.bulkComplete(req.user.tenantId, req.user.id, dto.assignmentIds, dto.done);
+    return this.tasksService.bulkComplete(req.user.tenantId, req.user.id, dto.assignmentIds, dto.done, dto.penalize ?? false);
   }
 
   @Put(':id/approve/:assignmentId')

@@ -69,6 +69,13 @@ export default function ApprovalsPage() {
     catch { } finally { setMarking(null); }
   }
 
+  async function markNotDonePenalize(assignmentId: string) {
+    if (!confirm("Marcar como não feita irá debitar os pontos desta tarefa do saldo da criança. Confirmar?")) return;
+    setMarking(assignmentId);
+    try { await api.post("/tasks/bulk-complete", { assignmentIds: [assignmentId], done: false, penalize: true }); loadAllAssignments(); }
+    catch { } finally { setMarking(null); }
+  }
+
   const pending = assignments.filter((a) => a.status === "pending");
   const done = assignments.filter((a) => a.status === "done" || a.status === "approved");
 
@@ -150,18 +157,10 @@ export default function ApprovalsPage() {
                         {a.task.icon || "📋"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-900 text-sm">{a.task.title}</div>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${color} flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0`}>
-                            {a.child?.name[0]}
-                          </div>
-                          <span className="text-xs text-gray-500">{a.child?.name}</span>
-                          <span className="text-xs text-violet-600 font-medium">⭐ {a.task.basePoints} pts</span>
-                          {a.task.difficulty && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${difficultyColors[a.task.difficulty] || ""}`}>
-                              {difficultyLabels[a.task.difficulty]}
-                            </span>
-                          )}
+                        <div className="font-semibold text-gray-900 text-sm truncate">{a.task.title}</div>
+                        <div className="text-xs text-gray-500 mt-0.5 truncate">
+                          {a.child?.name} · ⭐ {a.task.basePoints}pts
+                          {a.task.difficulty && <> · <span className={difficultyColors[a.task.difficulty]}>{difficultyLabels[a.task.difficulty]}</span></>}
                         </div>
                       </div>
                         {datePickerId === a.id ? (
@@ -183,10 +182,16 @@ export default function ApprovalsPage() {
                           </button>
                         </div>
                       ) : (
-                        <button onClick={() => openDatePicker(a.id)} disabled={marking === a.id}
-                          className="flex-shrink-0 flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition disabled:opacity-50">
-                          {marking === a.id ? "..." : "✓ Aprovar"}
-                        </button>
+                        <div className="flex-shrink-0 flex items-center gap-1.5">
+                          <button onClick={() => markNotDonePenalize(a.id)} disabled={marking === a.id}
+                            className="border border-red-200 text-red-500 px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-red-50 transition disabled:opacity-50">
+                            {marking === a.id ? "..." : <><span className="hidden sm:inline">✗ Não feita</span><span className="sm:hidden">✗</span></>}
+                          </button>
+                          <button onClick={() => openDatePicker(a.id)} disabled={marking === a.id}
+                            className="bg-emerald-600 text-white px-2.5 py-1.5 rounded-xl text-xs font-bold hover:bg-emerald-700 transition disabled:opacity-50">
+                            {marking === a.id ? "..." : <><span className="hidden sm:inline">✓ Feita</span><span className="sm:hidden">✓</span></>}
+                          </button>
+                        </div>
                       )}
                     </div>
                   );

@@ -125,6 +125,38 @@ export class SavingsService {
     return { success: true };
   }
 
+  async redeemGoal(tenantId: string, childId: string) {
+    const child = await this.prisma.child.findFirst({ where: { id: childId, tenantId } });
+    if (!child) throw new NotFoundException('Filho não encontrado');
+
+    const account = await this.getOrCreateAccount(childId);
+    if (!account.goalName || !account.goalAmount) throw new BadRequestException('Nenhuma meta definida');
+    const goalAmt = Number(account.goalAmount);
+    if (Number(account.balance) < goalAmt) throw new BadRequestException('Saldo insuficiente para resgatar a meta');
+
+    // Debit savings only — does NOT credit wallet (goal was "spent")
+    await this.prisma.$transaction([
+      this.prisma.savingsAccount.update({
+        where: { id: account.id },
+        data: {
+          balance: { decrement: goalAmt },
+          goalName: null,
+          goalAmount: null,
+        },
+      }),
+      this.prisma.savingsTransaction.create({
+        data: {
+          accountId: account.id,
+          type: 'withdraw',
+          amount: goalAmt,
+          description: `Meta "${account.goalName}" concluída — resgate`,
+        },
+      }),
+    ]);
+
+    return { success: true };
+  }
+
   async updateGoal(tenantId: string, childId: string, goalName: string, goalAmount: number) {
     const child = await this.prisma.child.findFirst({ where: { id: childId, tenantId } });
     if (!child) throw new NotFoundException('Filho não encontrado');

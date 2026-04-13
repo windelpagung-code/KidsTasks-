@@ -47,6 +47,9 @@ export class AuthService {
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Credenciais inválidas');
 
+    // Record last login
+    await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+
     const tokens = await this.generateTokens(user.id, user.email, user.tenantId, user.role);
     return { user: this.sanitizeUser(user), tenant: user.tenant, ...tokens };
   }
@@ -73,6 +76,8 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token inválido ou expirado');
     }
     await this.prisma.refreshToken.delete({ where: { token } });
+    // Update last login on token refresh (user is active)
+    await this.prisma.user.update({ where: { id: stored.user.id }, data: { lastLoginAt: new Date() } });
     return this.generateTokens(stored.user.id, stored.user.email, stored.user.tenantId, stored.user.role);
   }
 
@@ -149,6 +154,9 @@ export class AuthService {
         },
       });
     }
+
+    // Record last login
+    await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
     const tokens = await this.generateTokens(user.id, user.email, user.tenantId, user.role);
     return tokens;

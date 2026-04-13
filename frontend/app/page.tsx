@@ -18,7 +18,7 @@ export default function Home() {
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 py-3.5 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="KidsTasks" width={38} height={38} />
+            <Image src="/logo.png" alt="KidsTasks" width={48} height={48} />
             <span className="font-extrabold text-gray-900 text-lg tracking-tight">KidsTasks</span>
           </div>
 
@@ -814,12 +814,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between gap-8 mb-10">
             <div>
               <div className="flex items-center gap-2.5 mb-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
-                  style={{ background: "linear-gradient(135deg, #7c3aed, #6d28d9)" }}
-                >
-                  🎯
-                </div>
+                <Image src="/logo.png" alt="KidsTasks" width={36} height={36} className="rounded-lg" />
                 <span className="text-white font-bold tracking-tight">KidsTasks</span>
               </div>
               <p className="text-gray-500 text-sm max-w-xs leading-relaxed">

@@ -2,6 +2,9 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
+import { useUser } from "@/lib/useUser";
+
+const ADMIN_EMAIL = "windelpagung@gmail.com";
 
 interface Child {
   id: string;
@@ -74,6 +77,7 @@ const RANKING_PERIODS: { value: RankingPeriod; label: string }[] = [
 ];
 
 export default function DashboardPage() {
+  const user = useUser();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [rankingPeriod, setRankingPeriod] = useState<RankingPeriod>("weekly");
@@ -136,16 +140,26 @@ export default function DashboardPage() {
             Família {data?.tenant?.name || ""}! 👋
           </h1>
         </div>
-        {pendingApprovals > 0 && (
-          <Link
-            href="/dashboard/approvals"
-            className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 font-semibold px-4 py-2 rounded-xl text-sm hover:bg-amber-100 transition"
-          >
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse-dot" />
-            {pendingApprovals} aprova{pendingApprovals > 1 ? "ções" : "ção"} pendente{pendingApprovals > 1 ? "s" : ""}
-            <span>→</span>
-          </Link>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {pendingApprovals > 0 && (
+            <Link
+              href="/dashboard/approvals"
+              className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 font-semibold px-4 py-2 rounded-xl text-sm hover:bg-amber-100 transition"
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse-dot" />
+              {pendingApprovals} aprova{pendingApprovals > 1 ? "ções" : "ção"} pendente{pendingApprovals > 1 ? "s" : ""}
+              <span>→</span>
+            </Link>
+          )}
+          {user?.email === ADMIN_EMAIL && (
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1.5 bg-gray-900 text-white font-semibold px-4 py-2 rounded-xl text-sm hover:bg-gray-800 transition"
+            >
+              ⚡ Admin
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* ── KPI Cards ───────────────────────────────────────── */}
@@ -195,20 +209,16 @@ export default function DashboardPage() {
           <Link
             key={s.label}
             href={s.href}
-            className={`group relative rounded-2xl border p-5 transition-all hover:shadow-md hover:-translate-y-0.5 ${s.bg} ${s.border}`}
+            className={`group rounded-2xl border p-3 flex items-center gap-3 transition-all hover:shadow-sm ${s.bg} ${s.border}`}
           >
-            <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${s.gradient} flex items-center justify-center text-lg mb-3 shadow-sm`}>
+            <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${s.gradient} flex items-center justify-center text-base flex-shrink-0 shadow-sm`}>
               {s.icon}
             </div>
-            <div
-              className={`text-3xl font-extrabold ${s.text} mb-0.5`}
-              style={{ fontFamily: "var(--font-jakarta)" }}
-            >
-              {s.value}
-            </div>
-            <div className="text-gray-500 text-xs flex items-center justify-between">
-              <span>{s.label}</span>
-              <span className="opacity-0 group-hover:opacity-100 transition">→</span>
+            <div className="min-w-0">
+              <div className={`text-xl font-extrabold ${s.text} leading-tight`} style={{ fontFamily: "var(--font-jakarta)" }}>
+                {s.value}
+              </div>
+              <div className="text-gray-500 text-xs truncate">{s.label}</div>
             </div>
           </Link>
         ))}
@@ -232,67 +242,37 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
             {data.children.map((child, idx) => {
               const pct = xpPercent(child.totalPoints, child.level);
               const color = AVATAR_COLORS[idx % AVATAR_COLORS.length];
               return (
-                <div
+                <Link
                   key={child.id}
-                  className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all"
+                  href={`/dashboard/children/${child.id}`}
+                  className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3 hover:shadow-sm hover:border-violet-200 transition-all"
                 >
-                  <div className="flex items-start gap-4">
-                    {/* Avatar */}
-                    <ChildAvatar child={child} colorClass={color} size="lg" />
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-0.5">
-                        <span
-                          className="font-bold text-gray-900 truncate"
-                          style={{ fontFamily: "var(--font-jakarta)" }}
-                        >
-                          {child.name}
-                        </span>
-                        <span className="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
-                          Nível {child.level}
-                        </span>
-                      </div>
-
-                      {/* XP bar */}
-                      <div className="mb-2">
-                        <div className="flex justify-between text-[10px] text-gray-400 mb-1">
-                          <span>{child.totalPoints} pts</span>
-                          <span>{xpForLevel(child.level)} pts para próximo nível</span>
-                        </div>
-                        <div className="xp-bar">
-                          <div className="xp-bar-fill" style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-
-                      {/* Pending badge */}
-                      {child.pendingTasks > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-amber-600 font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse-dot" />
-                          {child.pendingTasks} tarefa{child.pendingTasks > 1 ? "s" : ""} aguardando aprovação
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-emerald-600 font-medium">
-                          ✓ Tudo em dia
+                  <ChildAvatar child={child} colorClass={color} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-gray-900 text-sm truncate" style={{ fontFamily: "var(--font-jakarta)" }}>
+                        {child.name}
+                      </span>
+                      <span className="text-[10px] bg-violet-100 text-violet-700 font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                        Nv {child.level}
+                      </span>
+                      {child.pendingTasks > 0 && (
+                        <span className="text-[10px] bg-amber-100 text-amber-600 font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                          {child.pendingTasks} ⏳
                         </span>
                       )}
                     </div>
+                    <div className="xp-bar mt-1.5">
+                      <div className="xp-bar-fill" style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
-
-                  <div className="flex justify-end mt-3">
-                    <Link
-                      href={`/dashboard/children/${child.id}`}
-                      className="text-violet-600 text-xs font-semibold hover:text-violet-700 transition"
-                    >
-                      Ver perfil completo →
-                    </Link>
-                  </div>
-                </div>
+                  <span className="text-gray-300 text-sm flex-shrink-0">→</span>
+                </Link>
               );
             })}
           </div>

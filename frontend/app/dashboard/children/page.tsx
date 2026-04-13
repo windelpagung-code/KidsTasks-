@@ -352,26 +352,23 @@ export default function ChildrenPage() {
       ) : (
         <div className="grid gap-4">
           {children.map((child) => (
-            <div key={child.id} className="bg-white rounded-2xl border border-gray-200 p-5 flex items-center gap-4">
-              <ChildAvatar child={child} size="lg" />
-              <div className="flex-1">
-                <div className="font-bold text-gray-800 text-lg">{child.name}</div>
-                {child.nickname && <div className="text-gray-400 text-sm">"{child.nickname}"</div>}
-                <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500">
-                  <span>⭐ Nível {child.level}</span>
-                  <span>🏆 {child.totalPoints} pts</span>
-                  <span>💰 R$ {Number(child.allowanceAmount).toFixed(2)}</span>
-                  <span>🔄 {frequencyOptions.find((f) => f.value === child.allowanceFrequency)?.label ?? "Mensal"}</span>
-                  <span>📅 {child.allowanceFrequency === "monthly"
-                    ? `Dia ${child.allowanceDay || 5}`
-                    : weekDays.find((d) => d.value === String(child.allowanceDay))?.label ?? `Dia ${child.allowanceDay}`}
-                  </span>
+            <div key={child.id} className="bg-white rounded-2xl border border-gray-200 p-4">
+              <div className="flex items-center gap-3">
+                <ChildAvatar child={child} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-gray-800 truncate text-sm">{child.name}</span>
+                    {child.nickname && <span className="text-gray-400 text-xs truncate hidden sm:inline">"{child.nickname}"</span>}
+                    <div className="flex gap-0.5 items-center flex-shrink-0 ml-auto">
+                      <Link href={`/dashboard/children/${child.id}`} className="p-1.5 rounded-lg hover:bg-purple-50 text-purple-600 transition text-xs font-semibold" title="Ver">👁️</Link>
+                      <button onClick={() => openEdit(child)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition text-xs" title="Editar">✏️</button>
+                      <button onClick={() => handleDelete(child.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 transition text-xs font-bold" title="Remover">✕</button>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5 truncate">
+                    ⭐ Nv{child.level} · 🏆 {child.totalPoints}pts · 💰 R${Number(child.allowanceAmount).toFixed(2)} · {frequencyOptions.find((f) => f.value === child.allowanceFrequency)?.label ?? "Mensal"}
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-2 items-center">
-                <Link href={`/dashboard/children/${child.id}`} className="text-sm text-purple-600 hover:text-purple-800 font-medium px-3 py-1.5 rounded-lg hover:bg-purple-50 transition">Ver →</Link>
-                <button onClick={() => openEdit(child)} className="text-sm text-gray-500 hover:text-gray-700 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition">Editar</button>
-                <button onClick={() => handleDelete(child.id)} className="text-sm text-red-400 hover:text-red-600 font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 transition">Remover</button>
               </div>
             </div>
           ))}

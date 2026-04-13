@@ -165,7 +165,11 @@ export default function TasksPrintPage() {
       <div className="print-page max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-6 pb-4 border-b-2 border-gray-800">
-          <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+          <div className="flex items-center gap-3 mb-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="KidsTasks" style={{ width: 36, height: 36, borderRadius: 8 }} />
+            <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+          </div>
           <div className="flex items-center justify-between mt-1">
             <p className="text-gray-500 text-sm capitalize">{today}</p>
             {recurrenceFilter !== "all" && (

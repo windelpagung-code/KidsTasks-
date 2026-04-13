@@ -45,6 +45,12 @@ export class SavingsController {
     return this.savingsService.deleteTransaction(req.user.tenantId, childId, txId, req.user.id);
   }
 
+  @Post(':childId/redeem-goal')
+  @ApiOperation({ summary: 'Resgatar meta — debita poupança sem creditar carteira' })
+  redeemGoal(@Req() req, @Param('childId') childId: string) {
+    return this.savingsService.redeemGoal(req.user.tenantId, childId);
+  }
+
   @Put(':childId/goal')
   @ApiOperation({ summary: 'Definir meta de poupança' })
   updateGoal(@Req() req, @Param('childId') childId: string, @Body() body: { goalName: string; goalAmount: number }) {

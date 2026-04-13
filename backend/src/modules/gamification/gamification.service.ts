@@ -77,13 +77,20 @@ export class GamificationService {
   async getRanking(tenantId: string, period: 'daily' | 'weekly' | 'monthly' | 'all' = 'weekly') {
     const now = new Date();
     let start: Date | null = null;
+    let end: Date | null = null;
+
+    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const tomorrowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
 
     if (period === 'daily') {
-      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+      start = todayUTC;
+      end = tomorrowUTC;
     } else if (period === 'weekly') {
       start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 6));
+      end = tomorrowUTC;
     } else if (period === 'monthly') {
       start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+      end = tomorrowUTC;
     }
 
     const children = await this.prisma.child.findMany({ where: { tenantId } });
@@ -103,7 +110,7 @@ export class GamificationService {
           where: {
             childId: child.id,
             status: { in: ['done', 'approved'] },
-            completedAt: { gte: start! },
+            completedAt: { gte: start!, lt: end! },
           },
           _sum: { pointsEarned: true },
         });
