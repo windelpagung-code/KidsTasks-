@@ -42,15 +42,20 @@ function getGreeting() {
   return "Boa noite";
 }
 
-function xpForLevel(level: number) {
-  return level * 100;
-}
+const LEVELS = [
+  { level: 1, min: 0,    max: 199 },
+  { level: 2, min: 200,  max: 499 },
+  { level: 3, min: 500,  max: 999 },
+  { level: 4, min: 1000, max: 2499 },
+  { level: 5, min: 2500, max: Infinity },
+];
 
-function xpPercent(totalPoints: number, level: number) {
-  const base = (level - 1) * 100;
-  const next = level * 100;
-  const pct = Math.min(100, Math.round(((totalPoints - base) / (next - base)) * 100));
-  return Math.max(0, pct);
+function xpPercent(totalPoints: number) {
+  const current = LEVELS.find((l) => totalPoints >= l.min && totalPoints <= l.max) ?? LEVELS[0];
+  if (current.level === 5) return 100;
+  const next = LEVELS[current.level];
+  const range = next.min - current.min;
+  return Math.max(0, Math.min(100, Math.round(((totalPoints - current.min) / range) * 100)));
 }
 
 const AVATAR_COLORS = [
@@ -224,61 +229,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* ── Children cards ──────────────────────────────────── */}
-      {data?.children && data.children.length > 0 ? (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2
-              className="text-lg font-bold text-gray-900"
-              style={{ fontFamily: "var(--font-jakarta)" }}
-            >
-              Heróis da família
-            </h2>
-            <Link
-              href="/dashboard/children"
-              className="text-violet-600 text-sm font-medium hover:text-violet-700 transition"
-            >
-              Ver todos →
-            </Link>
-          </div>
-
-          <div className="space-y-2">
-            {data.children.map((child, idx) => {
-              const pct = xpPercent(child.totalPoints, child.level);
-              const color = AVATAR_COLORS[idx % AVATAR_COLORS.length];
-              return (
-                <Link
-                  key={child.id}
-                  href={`/dashboard/children/${child.id}`}
-                  className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3 hover:shadow-sm hover:border-violet-200 transition-all"
-                >
-                  <ChildAvatar child={child} colorClass={color} size="sm" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-gray-900 text-sm truncate" style={{ fontFamily: "var(--font-jakarta)" }}>
-                        {child.name}
-                      </span>
-                      <span className="text-[10px] bg-violet-100 text-violet-700 font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                        Nv {child.level}
-                      </span>
-                      {child.pendingTasks > 0 && (
-                        <span className="text-[10px] bg-amber-100 text-amber-600 font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                          {child.pendingTasks} ⏳
-                        </span>
-                      )}
-                    </div>
-                    <div className="xp-bar mt-1.5">
-                      <div className="xp-bar-fill" style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                  <span className="text-gray-300 text-sm flex-shrink-0">→</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        /* Empty state */
+      {/* ── Empty state (sem filhos) ────────────────────────── */}
+      {data?.children && data.children.length === 0 && (
         <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-10 text-center">
           <div className="text-5xl mb-4 animate-float inline-block">👧</div>
           <h3 className="font-bold text-gray-800 mb-2" style={{ fontFamily: "var(--font-jakarta)" }}>
@@ -335,7 +287,7 @@ export default function DashboardPage() {
                   const dataChild = data.children.find((c) => c.id === entry.child.id);
                   const color = AVATAR_COLORS[(data.children.findIndex((c) => c.id === entry.child.id)) % AVATAR_COLORS.length];
                   const medals = ["🥇", "🥈", "🥉"];
-                  const pct = dataChild ? xpPercent(dataChild.totalPoints, dataChild.level) : 0;
+                  const pct = dataChild ? xpPercent(dataChild.totalPoints) : 0;
                   return (
                     <div key={entry.child.id} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? "bg-amber-50 border border-amber-100" : "bg-gray-50"}`}>
                       <span className="text-xl w-7 text-center flex-shrink-0">{medals[idx] || `${idx + 1}º`}</span>

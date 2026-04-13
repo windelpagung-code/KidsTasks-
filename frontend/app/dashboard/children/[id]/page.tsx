@@ -19,10 +19,30 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   not_done: { label: "Não feita", color: "bg-red-50 text-red-600 border-red-200" },
 };
 
-function xpPercent(totalPoints: number, level: number) {
-  const base = (level - 1) * 100;
-  const next = level * 100;
-  return Math.max(0, Math.min(100, Math.round(((totalPoints - base) / (next - base)) * 100)));
+const LEVELS = [
+  { level: 1, min: 0,    max: 199,      title: "Aprendiz" },
+  { level: 2, min: 200,  max: 499,      title: "Explorador" },
+  { level: 3, min: 500,  max: 999,      title: "Aventureiro" },
+  { level: 4, min: 1000, max: 2499,     title: "Campeão" },
+  { level: 5, min: 2500, max: Infinity, title: "Lenda" },
+];
+
+function getLevelInfo(totalPoints: number) {
+  return LEVELS.find((l) => totalPoints >= l.min && totalPoints <= l.max) ?? LEVELS[0];
+}
+
+function xpPercent(totalPoints: number) {
+  const current = getLevelInfo(totalPoints);
+  if (current.level === 5) return 100;
+  const next = LEVELS[current.level]; // next level entry
+  const range = next.min - current.min;
+  return Math.max(0, Math.min(100, Math.round(((totalPoints - current.min) / range) * 100)));
+}
+
+function nextLevelXP(totalPoints: number) {
+  const current = getLevelInfo(totalPoints);
+  if (current.level === 5) return null;
+  return LEVELS[current.level].min;
 }
 
 export default function ChildDetailPage() {
@@ -73,7 +93,9 @@ export default function ChildDetailPage() {
 
   const pending = assignments.filter((a) => a.status === "pending");
   const done = assignments.filter((a) => a.status === "done" || a.status === "approved");
-  const pct = xpPercent(child.totalPoints, child.level);
+  const pct = xpPercent(child.totalPoints);
+  const levelInfo = getLevelInfo(child.totalPoints);
+  const nextXP = nextLevelXP(child.totalPoints);
 
   const showAvatar = child.avatarUrl && (child.avatarUrl.startsWith("data:image") || child.avatarUrl.startsWith("http"));
   const showEmoji = child.avatarUrl && !showAvatar;
@@ -111,7 +133,7 @@ export default function ChildDetailPage() {
             {/* Level badge */}
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 text-white text-xs font-bold px-3 py-1 rounded-full">
-                ⭐ Nível {child.level}
+                ⭐ Nível {levelInfo.level} · {levelInfo.title}
               </span>
               <span className="inline-flex items-center gap-1.5 bg-amber-400/20 border border-amber-400/30 text-amber-300 text-xs font-bold px-3 py-1 rounded-full">
                 🏆 {child.totalPoints} pts
@@ -132,13 +154,20 @@ export default function ChildDetailPage() {
         <div className="relative z-10 mt-5">
           <div className="flex justify-between text-xs text-white/40 mb-1.5">
             <span>{child.totalPoints} XP</span>
-            <span>Nível {child.level + 1}: {child.level * 100} XP</span>
+            {nextXP !== null
+              ? <span>Próximo nível: {nextXP} XP</span>
+              : <span>🏆 Nível máximo!</span>
+            }
           </div>
           <div className="h-2 rounded-full bg-white/10 overflow-hidden">
             <div className="h-full rounded-full transition-all duration-700"
               style={{ width: `${pct}%`, background: "linear-gradient(90deg, #fbbf24, #f472b6)" }} />
           </div>
-          <p className="text-white/30 text-xs mt-1">{pct}% para o próximo nível</p>
+          <p className="text-white/30 text-xs mt-1">
+            {nextXP !== null
+              ? `${pct}% para o próximo nível · faltam ${nextXP - child.totalPoints} pts`
+              : "Você chegou ao topo! 🎉"}
+          </p>
         </div>
       </div>
 
