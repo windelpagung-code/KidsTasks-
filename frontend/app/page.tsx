@@ -812,17 +812,17 @@ export default function Home() {
                 {
                   title: "Empresa",
                   links: [
-                    { label: "Sobre nós", href: "#" },
-                    { label: "Blog", href: "#" },
-                    { label: "Contato", href: "#" },
+                    { label: "Sobre nós", href: "/sobre" },
+                    { label: "Blog", href: "/blog" },
+                    { label: "Contato", href: "/contato" },
                   ],
                 },
                 {
                   title: "Legal",
                   links: [
-                    { label: "Privacidade", href: "#" },
-                    { label: "Termos de uso", href: "#" },
-                    { label: "LGPD", href: "#" },
+                    { label: "Privacidade", href: "/privacidade" },
+                    { label: "Termos de uso", href: "/termos" },
+                    { label: "LGPD", href: "/lgpd" },
                   ],
                 },
               ].map((col) => (
