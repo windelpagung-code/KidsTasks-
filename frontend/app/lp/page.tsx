@@ -140,17 +140,13 @@ export default function Home() {
               <div className="w-3 h-3 rounded-full bg-emerald-400/60" />
               <div className="flex-1 mx-4 h-5 rounded-md bg-white/10" />
             </div>
-            {/* SCREENSHOT PLACEHOLDER — DASHBOARD */}
-            <div
-              className="w-full flex items-center justify-center py-20 px-8 text-center"
-              style={{ minHeight: 320, background: "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(99,102,241,0.1))" }}
-            >
-              <div>
-                <div className="text-5xl mb-4">🖥️</div>
-                <p className="text-white/50 text-sm font-medium">[ Screenshot do Dashboard — inserir aqui ]</p>
-                <p className="text-white/30 text-xs mt-2">Tamanho recomendado: 1200 × 700px</p>
-              </div>
-            </div>
+            {/* SCREENSHOT — DASHBOARD */}
+            <img
+              src="/screenshots/01-dashboard.png"
+              alt="Dashboard KidsTasks — visão geral da família"
+              className="w-full block"
+              style={{ display: "block" }}
+            />
           </div>
         </div>
       </section>
@@ -292,14 +288,15 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Screenshot placeholder — Como funciona */}
-          <div className="rounded-2xl border-2 border-dashed border-violet-200 bg-violet-50 overflow-hidden">
-            <div className="flex items-center justify-center py-20 px-8 text-center">
-              <div>
-                <div className="text-5xl mb-4">📱</div>
-                <p className="text-violet-500 text-sm font-medium">[ Screenshot — Tela de Tarefas do Filho ]</p>
-                <p className="text-violet-300 text-xs mt-2">Mostre a gamificação em ação aqui · 1200 × 600px</p>
-              </div>
+          {/* Screenshot — Tarefas + Aprovações lado a lado */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="rounded-2xl overflow-hidden shadow-lg border border-violet-100">
+              <div className="bg-violet-50 px-4 py-2 text-xs font-semibold text-violet-600">📋 Gestão de tarefas</div>
+              <img src="/screenshots/02-tarefas.png" alt="Tela de tarefas KidsTasks" className="w-full block" />
+            </div>
+            <div className="rounded-2xl overflow-hidden shadow-lg border border-violet-100">
+              <div className="bg-violet-50 px-4 py-2 text-xs font-semibold text-violet-600">✅ Aprovações dos pais</div>
+              <img src="/screenshots/04-aprovacoes.png" alt="Aprovações de tarefas KidsTasks" className="w-full block" />
             </div>
           </div>
         </div>
@@ -380,25 +377,18 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-4">
-            {[
-              { label: "Dashboard do pai — visão geral", desc: "1200 × 800px" },
-              { label: "Tela de tarefas do filho", desc: "400 × 700px (mobile)" },
-              { label: "Loja de recompensas", desc: "1200 × 800px" },
-            ].map((p, i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-white/10 overflow-hidden"
-                style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(99,102,241,0.08))" }}
-              >
-                <div className="flex items-center justify-center py-14 px-6 text-center" style={{ minHeight: 240 }}>
-                  <div>
-                    <div className="text-4xl mb-3">🖼️</div>
-                    <p className="text-white/50 text-xs font-medium">[ {p.label} ]</p>
-                    <p className="text-white/25 text-xs mt-1">{p.desc}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <div className="rounded-2xl border border-white/10 overflow-hidden">
+              <div className="bg-white/5 px-4 py-2 text-xs font-semibold text-violet-300">🏠 Dashboard da família</div>
+              <img src="/screenshots/01-dashboard.png" alt="Dashboard KidsTasks — visão geral da família" className="w-full block" />
+            </div>
+            <div className="rounded-2xl border border-white/10 overflow-hidden">
+              <div className="bg-white/5 px-4 py-2 text-xs font-semibold text-violet-300">📋 Tarefas do filho</div>
+              <img src="/screenshots/mobile-02-tarefas.png" alt="Tela de tarefas do filho no mobile" className="w-full block" />
+            </div>
+            <div className="rounded-2xl border border-white/10 overflow-hidden">
+              <div className="bg-white/5 px-4 py-2 text-xs font-semibold text-violet-300">🛍️ Loja de recompensas</div>
+              <img src="/screenshots/06-loja.png" alt="Loja de recompensas KidsTasks" className="w-full block" />
+            </div>
           </div>
         </div>
       </section>
