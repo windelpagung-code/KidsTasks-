@@ -73,8 +73,9 @@ export default function WalletPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [tab, setTab] = useState<"wallet" | "savings">("wallet");
   // Savings state
-  const [savingsAccount, setSavingsAccount] = useState<SavingsAccount | null>(null);
+  const [savingsAccount, setSavingsAccount] = useState<SavingsAccount | null | undefined>(undefined);
   const [savingsLoading, setSavingsLoading] = useState(false);
+  const [savingsLoadError, setSavingsLoadError] = useState("");
   const [savingsTxs, setSavingsTxs] = useState<SavingsTx[]>([]);
   const [savingsWalletBalance, setSavingsWalletBalance] = useState(0);
   const [savingsForm, setSavingsForm] = useState(emptySavingsForm);
@@ -119,12 +120,15 @@ export default function WalletPage() {
   const loadSavings = useCallback(() => {
     if (!selected) return;
     setSavingsLoading(true);
+    setSavingsLoadError("");
     api.get(`/savings/${selected}`).then((r) => {
       setSavingsAccount(r.data.account);
       setSavingsTxs(r.data.transactions);
       setSavingsWalletBalance(r.data.walletBalance);
       setGoals(r.data.goals || []);
-    }).catch(() => {
+    }).catch((err) => {
+      const msg = err?.response?.data?.message;
+      setSavingsLoadError(Array.isArray(msg) ? msg[0] : msg || err?.message || "Erro desconhecido");
       setSavingsAccount(null);
     }).finally(() => setSavingsLoading(false));
   }, [selected]);
@@ -535,7 +539,7 @@ export default function WalletPage() {
           </div>
 
           {/* ── SAVINGS TAB ── */}
-          {tab === "savings" && (savingsLoading ? (
+          {tab === "savings" && (savingsLoading || savingsAccount === undefined ? (
             <div className="flex justify-center items-center py-20">
               <div className="text-4xl animate-bounce">🐷</div>
             </div>
@@ -543,6 +547,7 @@ export default function WalletPage() {
             <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
               <div className="text-5xl mb-3">🐷</div>
               <p className="text-gray-500 text-sm">Não foi possível carregar a poupança</p>
+              {savingsLoadError && <p className="text-red-500 text-xs mt-1 font-mono">{savingsLoadError}</p>}
               <button onClick={loadSavings} className="mt-4 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition">Tentar novamente</button>
             </div>
           ) : (() => {
